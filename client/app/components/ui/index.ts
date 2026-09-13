@@ -5,6 +5,7 @@ export { Select, type SelectProps } from "./Select";
 export { Label, type LabelProps } from "./Label";
 export { Modal, ModalFooter, type ModalProps, type ModalAction, type ModalFooterProps } from "./Modal";
 export { ToastProvider, useToast, useToastHelpers } from "./Toast";
+export { ErrorBanner, reportError, type ErrorBannerProps } from "./ErrorBanner";
 export { PageShell, PageHeader, SectionHeader, Card } from "./PageShell";
 export {
   ScoreBadge,

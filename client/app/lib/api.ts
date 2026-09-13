@@ -109,6 +109,41 @@ import type {
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
+export interface ApiError extends Error {
+  status: number;
+  retryable: boolean;
+  data?: { path: string; method: string };
+}
+
+/**
+ * True when the failure is transient and a retry may succeed: server errors
+ * (incl. 502 AI outages from the backend's AI gateway), rate limits, timeouts.
+ * 4xx client errors (400/404/401) are permanent — retrying is pointless.
+ */
+export function isRetryableError(err: unknown): boolean {
+  return (err as Partial<ApiError> | null)?.retryable === true;
+}
+
+/** True when the backend's AI gateway reported an AI outage (502). */
+export function isAiUnavailableError(err: unknown): boolean {
+  return (err as Partial<ApiError> | null)?.status === 502;
+}
+
+/** Best human-readable message from any thrown value or stored message string. */
+export function describeError(err: unknown, fallback = "Something went wrong"): string {
+  if (typeof err === "string" && err) return err;
+  if (err instanceof Error && err.message) return err.message;
+  return fallback;
+}
+
+/**
+ * Mirrors AI_UNAVAILABLE_MESSAGE from server/src/common/ai-gateway.ts — the
+ * single client-safe message the backend returns with every 502 from an AI
+ * call path. Keep in sync with the server constant.
+ */
+export const AI_UNAVAILABLE_MESSAGE =
+  'AI analysis is temporarily unavailable. Please try again later.';
+
 interface RequestOptions extends RequestInit {
   isFormData?: boolean;
   timeout?: number;
@@ -152,10 +187,10 @@ async function request<T>(
     headers['Content-Type'] = 'application/json';
   }
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-
   const attemptFetch = async (attempt: number): Promise<T> => {
+    // A fresh controller + timeout per attempt, so every try gets a full window.
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
     try {
       const res = await fetch(`${API_BASE}${path}`, {
         ...fetchOptions,
@@ -167,8 +202,6 @@ async function request<T>(
         signal: controller.signal,
       });
 
-      clearTimeout(timeoutId);
-
       if (!res.ok) {
         let errorMessage = res.statusText;
         try {
@@ -178,11 +211,7 @@ async function request<T>(
           // Use status text
         }
 
-        const error = new Error(errorMessage) as Error & { 
-          status: number; 
-          retryable: boolean;
-          data?: any;
-        };
+        const error = new Error(errorMessage) as ApiError;
         error.status = res.status;
         error.retryable = res.status >= 500 || res.status === 429 || res.status === 408;
         error.data = { path, method: fetchOptions.method || 'GET' };
@@ -195,25 +224,29 @@ async function request<T>(
       }
       return res.text() as any;
     } catch (err) {
-      clearTimeout(timeoutId);
-      
-      if (err instanceof DOMException && err.name === 'AbortError') {
-        const error = new Error('Request timeout') as Error & { status: number; retryable: boolean };
+      let thrown = err;
+
+      if (thrown instanceof DOMException && thrown.name === 'AbortError') {
+        const error = new Error('Request timeout') as ApiError;
         error.status = 408;
         error.retryable = true;
-        throw error;
+        thrown = error;
       }
 
-      if (attempt < retries && (err as any).retryable) {
+      // Timeouts were previously marked retryable but never actually retried;
+      // they now follow the same backoff path as 5xx/429.
+      if (attempt < retries && isRetryableError(thrown)) {
         await new Promise(r => setTimeout(r, retryDelay * Math.pow(2, attempt)));
         return attemptFetch(attempt + 1);
       }
-      throw err;
+      throw thrown;
+    } finally {
+      clearTimeout(timeoutId);
     }
   };
 
   const promise = attemptFetch(0);
-  
+
   if (deduplicate) {
     pendingRequests.set(requestKey, promise);
     promise.finally(() => pendingRequests.delete(requestKey));

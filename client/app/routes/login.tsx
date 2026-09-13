@@ -1,7 +1,7 @@
 import { useState, type FormEvent, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { signIn, useSession } from "~/lib/auth-store";
-import { PageShell, PageHeader, Button, Input, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Login" },
@@ -32,7 +32,7 @@ export default function Login() {
     try {
       await signIn.email({ email, password });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed. Check your credentials.");
+      reportError(err, { title: "Login failed — check your credentials", toastError, setError });
       setLoading(false);
     }
   }
@@ -57,11 +57,7 @@ export default function Login() {
           subtitle="Log in to continue your job search"
         />
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">
-            {error}
-          </div>
-        )}
+        {error && <ErrorBanner error={error} />}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <Input

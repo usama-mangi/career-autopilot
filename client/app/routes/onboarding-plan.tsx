@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { cn } from "~/lib/utils";
-import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, useToastHelpers, Select } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, useToastHelpers, Select, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | 30-60-90 Day Plan Builder" },
@@ -69,8 +69,8 @@ export default function OnboardingPlan() {
       setLoading(false);
     }
 
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleCreate(e?: React.FormEvent) {
+    e?.preventDefault();
     if (!formData.companyName || !formData.roleTitle) return;
     setSaving(true);
     setError("");
@@ -87,8 +87,12 @@ export default function OnboardingPlan() {
       setFormData({ companyName: "", roleTitle: "", jobDescription: "", startDate: "", planType: "30-60-90" });
       toastSuccess("Plan created", "Your 90-day plan has been generated");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create plan");
-      toastError("Creation failed", err instanceof Error ? err.message : "Please try again");
+      reportError(err, {
+        title: "Creation failed",
+        toastError,
+        setError,
+        retry: handleCreate,
+      });
     }
     setSaving(false);
   }
@@ -100,7 +104,7 @@ export default function OnboardingPlan() {
       setPlans(prev => prev.map(p => p.id === id ? updated : p));
       if (expandedId === id) setExpandedId(null);
     } catch (err) {
-      toastError("Update failed", err instanceof Error ? err.message : "Please try again");
+      reportError(err, { title: "Update failed", toastError });
     }
     setUpdating(false);
   }
@@ -113,7 +117,7 @@ export default function OnboardingPlan() {
       if (expandedId === id) setExpandedId(null);
       toastSuccess("Plan deleted");
     } catch (err) {
-      toastError("Delete failed", err instanceof Error ? err.message : "Unknown error");
+      reportError(err, { title: "Delete failed", toastError });
     }
   }
 
@@ -141,7 +145,7 @@ export default function OnboardingPlan() {
         action={<Button onClick={() => { resetForm(); setShowForm(true); }}>+ New Plan</Button>}
       />
 
-      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+      {error && <ErrorBanner error={error} onRetry={handleCreate} />}
 
       {plans.length === 0 ? (
         <Card className="text-center py-12">
@@ -275,7 +279,7 @@ export default function OnboardingPlan() {
         size="lg"
       >
         <form onSubmit={handleCreate} className="space-y-4">
-          {error && <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+          {error && <ErrorBanner error={error} />}
           <div className="grid grid-cols-2 gap-4">
             <div className="flex-1">
               <Input

@@ -4,7 +4,7 @@ import type { SharedReport, SharedFeedback, GeneratedResume } from "types";
 import { ResumePreview } from "~/components/ResumePreview";
 import { api, getUploadUrl } from "~/lib/api";
 import { normalizeFeedback } from "~/lib/utils";
-import { PageShell, Button, Input, Textarea, useToastHelpers, ScoreBadge, CategoryScore } from "~/components/ui";
+import { PageShell, Button, Input, Textarea, useToastHelpers, ScoreBadge, CategoryScore, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Shared Resume" },
@@ -53,7 +53,7 @@ export default function Share() {
       setFeedbackRating(null);
       toastSuccess("Feedback submitted", "Thank you for your feedback!");
     } catch (err) {
-      toastError("Failed", err instanceof Error ? err.message : "Could not submit feedback");
+      reportError(err, { title: "Feedback failed", toastError, retry: handleSubmitFeedback });
     }
     setSubmitting(false);
   }
@@ -76,7 +76,7 @@ export default function Share() {
 
       {error && (
         <div className="flex flex-col items-center gap-6 py-24 text-center">
-          <p className="text-xl text-gray-500">{error}</p>
+          <ErrorBanner error={error} className="max-w-md" />
           <Link to="/"><Button>Go to Career Autopilot</Button></Link>
         </div>
       )}

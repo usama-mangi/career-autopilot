@@ -278,10 +278,15 @@ export class ExtensionService {
   }
 
   async getApplicationAnalytics(userId: string, filters?: { startDate?: string; endDate?: string }) {
+    // Build the createdAt range in one object — two spreads would overwrite
+    // the key and silently drop the start bound when both filters are set.
+    const createdAt: Prisma.DateTimeFilter = {};
+    if (filters?.startDate) createdAt.gte = new Date(filters.startDate);
+    if (filters?.endDate) createdAt.lte = new Date(filters.endDate);
+
     const where: Prisma.JobApplicationWhereInput = {
       userId,
-      ...(filters?.startDate ? { createdAt: { gte: new Date(filters.startDate) } } : {}),
-      ...(filters?.endDate ? { createdAt: { lte: new Date(filters.endDate) } } : {}),
+      ...(Object.keys(createdAt).length > 0 ? { createdAt } : {}),
     };
 
     const applications = await this.prisma.jobApplication.findMany({

@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { withAiGateway } from '../common/ai-gateway';
 import { PrismaService } from '../prisma/prisma.service';
 import { UploadService } from '../upload/upload.service';
 import { AiService } from '../ai/ai.service';
@@ -124,7 +125,15 @@ export class ResumesService {
     };
     await this.prisma.resume.update({
       where: { id: resume.id },
-      data: { feedback: feedback || fallbackFeedback },
+      // `feedback` is {} whenever the best-effort analysis failed — prefer the
+      // shaped fallback over an empty object so clients always get a full
+      // feedback structure (scores default to 0).
+      data: {
+        feedback:
+          feedback && Object.keys(feedback).length > 0
+            ? feedback
+            : fallbackFeedback,
+      },
     });
 
     return this.findById(resume.id, userId);
@@ -251,7 +260,14 @@ export class ResumesService {
     const allProjects = (profile.projects as any[]) || [];
     let projectsForAI = allProjects;
     if (allProjects.length && body.jobDescription?.trim()) {
-      projectsForAI = await this.findRelevantProjects(allProjects, body.jobDescription, 5);
+      // Best-effort: smart project ranking needs the embeddings API. If it is
+      // down, fall back to all projects instead of failing a path that is
+      // designed to survive AI outages.
+      try {
+        projectsForAI = await this.findRelevantProjects(allProjects, body.jobDescription, 5);
+      } catch {
+        projectsForAI = allProjects;
+      }
     }
     const smartProjects = projectsForAI.map((p) => ({
       name: p.name || p.title,
@@ -469,19 +485,23 @@ export class ResumesService {
       additionalContext: body.additionalContext,
     });
 
-    const aiResponse = await this.aiService.chat([
-      { role: 'system', content: 'You are an expert cover letter writer. Return ONLY the cover letter text.' },
-      { role: 'user', content: prompt },
-    ]);
+    // Hard-fail AI path (chat → text → persist): a failed generation must
+    // surface as 502 with the shared client-safe message, not a raw 500.
+    return withAiGateway('ResumesService.generateCoverLetter', async () => {
+      const aiResponse = await this.aiService.chat([
+        { role: 'system', content: 'You are an expert cover letter writer. Return ONLY the cover letter text.' },
+        { role: 'user', content: prompt },
+      ]);
 
-    const result = this.aiService.getResponseText(aiResponse);
-    return this.prisma.coverLetter.create({
-      data: {
-        resumeId: resume.id,
-        content: result,
-        companyName: body.companyName,
-        hiringManager: body.hiringManager || null,
-      },
+      const result = this.aiService.getResponseText(aiResponse);
+      return this.prisma.coverLetter.create({
+        data: {
+          resumeId: resume.id,
+          content: result,
+          companyName: body.companyName,
+          hiringManager: body.hiringManager || null,
+        },
+      });
     });
   }
 
@@ -511,18 +531,20 @@ export class ResumesService {
       feedback: resume.feedback as any,
     });
 
-    const aiResponse = await this.aiService.chat([
-      { role: 'system', content: 'You are a career coach analyzing skill gaps. Return ONLY a valid JSON object.' },
-      { role: 'user', content: prompt },
-    ]);
+    return withAiGateway('ResumesService.analyzeSkillGap', async () => {
+      const aiResponse = await this.aiService.chat([
+        { role: 'system', content: 'You are a career coach analyzing skill gaps. Return ONLY a valid JSON object.' },
+        { role: 'user', content: prompt },
+      ]);
 
-    const result = this.aiService.parseAIResponse(this.aiService.getResponseText(aiResponse));
-    await this.prisma.resume.update({
-      where: { id },
-      data: { skillGapResult: result as any },
+      const result = this.aiService.parseAIResponse(this.aiService.getResponseText(aiResponse));
+      await this.prisma.resume.update({
+        where: { id },
+        data: { skillGapResult: result as any },
+      });
+
+      return result;
     });
-
-    return result;
   }
 
   async getInterviewQuestions(id: string, userId: string) {
@@ -548,18 +570,20 @@ export class ResumesService {
       focusAreas: body.focusAreas,
     });
 
-    const aiResponse = await this.aiService.chat([
-      { role: 'system', content: 'You are an interview coach. Return ONLY a valid JSON object.' },
-      { role: 'user', content: prompt },
-    ]);
+    return withAiGateway('ResumesService.generateInterviewQuestions', async () => {
+      const aiResponse = await this.aiService.chat([
+        { role: 'system', content: 'You are an interview coach. Return ONLY a valid JSON object.' },
+        { role: 'user', content: prompt },
+      ]);
 
-    const result = this.aiService.parseAIResponse(this.aiService.getResponseText(aiResponse));
-    await this.prisma.resume.update({
-      where: { id },
-      data: { interviewQuestionsResult: result as any },
+      const result = this.aiService.parseAIResponse(this.aiService.getResponseText(aiResponse));
+      await this.prisma.resume.update({
+        where: { id },
+        data: { interviewQuestionsResult: result as any },
+      });
+
+      return result;
     });
-
-    return result;
   }
 
   async getSalaryEstimate(id: string, userId: string) {
@@ -586,18 +610,20 @@ export class ResumesService {
       targetIndustry: body.targetIndustry,
     });
 
-    const aiResponse = await this.aiService.chat([
-      { role: 'system', content: 'You are a salary estimation expert. Return ONLY a valid JSON object.' },
-      { role: 'user', content: prompt },
-    ]);
+    return withAiGateway('ResumesService.estimateSalary', async () => {
+      const aiResponse = await this.aiService.chat([
+        { role: 'system', content: 'You are a salary estimation expert. Return ONLY a valid JSON object.' },
+        { role: 'user', content: prompt },
+      ]);
 
-    const result = this.aiService.parseAIResponse(this.aiService.getResponseText(aiResponse));
-    await this.prisma.resume.update({
-      where: { id },
-      data: { salaryEstimateResult: result as any },
+      const result = this.aiService.parseAIResponse(this.aiService.getResponseText(aiResponse));
+      await this.prisma.resume.update({
+        where: { id },
+        data: { salaryEstimateResult: result as any },
+      });
+
+      return result;
     });
-
-    return result;
   }
 
   async getTemplateSuggestions(id: string, userId: string) {
@@ -617,18 +643,20 @@ export class ResumesService {
       feedback: resume.feedback as any,
     });
 
-    const aiResponse = await this.aiService.chat([
-      { role: 'system', content: 'You are a resume template expert. Return ONLY a valid JSON object.' },
-      { role: 'user', content: prompt },
-    ]);
+    return withAiGateway('ResumesService.suggestTemplates', async () => {
+      const aiResponse = await this.aiService.chat([
+        { role: 'system', content: 'You are a resume template expert. Return ONLY a valid JSON object.' },
+        { role: 'user', content: prompt },
+      ]);
 
-    const result = this.aiService.parseAIResponse(this.aiService.getResponseText(aiResponse));
-    await this.prisma.resume.update({
-      where: { id },
-      data: { templateSuggestionsResult: result as any },
+      const result = this.aiService.parseAIResponse(this.aiService.getResponseText(aiResponse));
+      await this.prisma.resume.update({
+        where: { id },
+        data: { templateSuggestionsResult: result as any },
+      });
+
+      return result;
     });
-
-    return result;
   }
 
   async getMultiJd(id: string, userId: string) {
@@ -652,18 +680,20 @@ export class ResumesService {
       jobEntries: body.jobEntries,
     });
 
-    const aiResponse = await this.aiService.chat([
-      { role: 'system', content: 'You are a career strategist comparing job descriptions. Return ONLY a valid JSON object.' },
-      { role: 'user', content: prompt },
-    ]);
+    return withAiGateway('ResumesService.compareMultipleJds', async () => {
+      const aiResponse = await this.aiService.chat([
+        { role: 'system', content: 'You are a career strategist comparing job descriptions. Return ONLY a valid JSON object.' },
+        { role: 'user', content: prompt },
+      ]);
 
-    const result = this.aiService.parseAIResponse(this.aiService.getResponseText(aiResponse));
-    await this.prisma.resume.update({
-      where: { id },
-      data: { multiJdResult: result as any },
+      const result = this.aiService.parseAIResponse(this.aiService.getResponseText(aiResponse));
+      await this.prisma.resume.update({
+        where: { id },
+        data: { multiJdResult: result as any },
+      });
+
+      return result;
     });
-
-    return result;
   }
 
   async generateShareToken(id: string, userId: string) {
@@ -719,34 +749,44 @@ export class ResumesService {
       atsFeedback: JSON.stringify(resume.feedback || {}),
     });
 
-    const aiResponse = await this.aiService.chat([
-      { role: 'user', content: prompt },
-    ]);
+    // Hard-fail AI path (chat → parse → persist): generation failure must
+    // surface as 502 with the shared client-safe message. The trailing ATS
+    // analysis below stays best-effort on purpose.
+    const { result, newResume } = await withAiGateway(
+      'ResumesService.generateTailoredResume',
+      async () => {
+        const aiResponse = await this.aiService.chat([
+          { role: 'user', content: prompt },
+        ]);
 
-    const result: any = this.aiService.parseAIResponse(
-      this.aiService.getResponseText(aiResponse),
-    );
+        const parsed: any = this.aiService.parseAIResponse(
+          this.aiService.getResponseText(aiResponse),
+        );
 
-    // Create a NEW resume record for the tailored version
-    const tailoredResumeContent = result.tailoredResume;
-    const textContent = this.formatTailoredResumeToText(tailoredResumeContent, body.targetRole || resume.jobTitle || 'Resume');
+        // Create a NEW resume record for the tailored version
+        const tailoredResumeContent = parsed.tailoredResume;
+        const textContent = this.formatTailoredResumeToText(tailoredResumeContent, body.targetRole || resume.jobTitle || 'Resume');
 
-    const newResume = await this.prisma.resume.create({
-      data: {
-        user: { connect: { id: userId } },
-        companyName: resume.companyName,
-        jobTitle: body.targetRole || resume.jobTitle || '',
-        jobDescription: body.jobDescription,
-        fileName: `tailored-${body.targetRole || 'resume'}-${Date.now()}.txt`,
-        format: 'txt',
-        filePath: '',
-        textPreview: textContent.substring(0, 500),
-        textContent: textContent,
-        generatedContent: tailoredResumeContent as any,
-        feedback: {},
-        tailoredResumeResult: Object.assign({}, result, { jobId: body.jobId || null }) as any,
+        const created = await this.prisma.resume.create({
+          data: {
+            user: { connect: { id: userId } },
+            companyName: resume.companyName,
+            jobTitle: body.targetRole || resume.jobTitle || '',
+            jobDescription: body.jobDescription,
+            fileName: `tailored-${body.targetRole || 'resume'}-${Date.now()}.txt`,
+            format: 'txt',
+            filePath: '',
+            textPreview: textContent.substring(0, 500),
+            textContent: textContent,
+            generatedContent: tailoredResumeContent as any,
+            feedback: {},
+            tailoredResumeResult: Object.assign({}, parsed, { jobId: body.jobId || null }) as any,
+          },
+        });
+
+        return { result: parsed, newResume: created };
       },
-    });
+    );
 
     // Run ATS analysis on the new tailored resume
     try {

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
-import { PageShell, PageHeader, Button, Input, Textarea, Card, useToastHelpers, ScoreCircle } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Textarea, Card, useToastHelpers, ScoreCircle, reportError } from "~/components/ui";
 import type { UserProfile, ProfileCompletion } from "types";
 
 export const meta = () => [
@@ -71,7 +71,11 @@ export default function GenerateResumePage() {
       toastSuccess("Resume generated", "Your resume has been created from your profile");
       navigate(`/resumes/${result.id}`);
     } catch (err) {
-      toastError("Generation failed", err instanceof Error ? err.message : "Unknown error");
+      reportError(err, {
+        title: "Generation failed",
+        toastError,
+        retry: handleGenerate,
+      });
     }
     setGenerating(false);
   }

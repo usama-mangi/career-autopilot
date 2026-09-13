@@ -26,6 +26,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import type { JobApplication, ApplicationStatus } from "types";
 import { APPLICATION_STATUS_CONFIG, PIPELINE_STATUSES, formatDate, getNextStatuses } from "~/lib/status-config";
+import { ErrorBanner, reportError } from "~/components/ui";
 
 // Kanban column component
 function KanbanColumn({ status, apps, onMoveApp }: { status: string; apps: any[]; onMoveApp: (appId: string, newStatus: string) => void }) {
@@ -132,26 +133,6 @@ function KanbanCard({ app, nextStatuses, onMove }: { app: any; nextStatuses: str
   );
 }
 
-// Helper functions
-function getNextStatuses(current: string): string[] {
-  const t: Record<string, string[]> = {
-    draft: ["applied", "withdrawn"],
-    applied: ["phone_screen", "rejected", "withdrawn"],
-    phone_screen: ["interviewing", "rejected", "withdrawn"],
-    interviewing: ["offer", "rejected", "withdrawn"],
-    offer: ["accepted", "rejected", "withdrawn"],
-    rejected: [],
-    accepted: [],
-    withdrawn: [],
-  };
-  return t[current] || [];
-}
-
-function formatDate(d: string | null | undefined) {
-  if (!d) return "—";
-  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
-
 export default function Applications() {
   const navigate = useNavigate();
   const { success: toastSuccess, error: toastError } = useToastHelpers();
@@ -188,7 +169,7 @@ export default function Applications() {
       const data = await api.applications.pipeline();
       setPipeline(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load");
+      reportError(err, { title: "Failed to load pipeline", toastError, setError, retry: loadPipeline });
     } finally {
       setLoading(false);
     }
@@ -208,7 +189,7 @@ export default function Applications() {
       toastSuccess("Application created");
       loadPipeline();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create");
+      reportError(err, { title: "Failed to create", toastError, setError });
       setTimeout(() => setError(""), 3000);
     }
   }
@@ -375,11 +356,7 @@ export default function Applications() {
         }
       />
 
-      {error && (
-        <div className="mb-4 p-3 bg-[#FEF2F2] border border-[#FEE2E2] rounded-xl text-[#B91C1C] text-sm">
-          {error}
-        </div>
-      )}
+      {error && <ErrorBanner error={error} onRetry={loadPipeline} />}
 
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -490,9 +467,7 @@ export default function Applications() {
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
           />
-          {error && (
-            <div className="p-3 bg-[#FEF2F2] border border-[#FEE2E2] rounded-xl text-[#B91C1C] text-sm">{error}</div>
-          )}
+          {error && <ErrorBanner error={error} className="mb-0" />}
           <ModalFooter
             actions={[
               { label: "Cancel", variant: "secondary", onClick: () => { setShowForm(false); setFormData({ companyName: "", roleTitle: "", notes: "" }); } },

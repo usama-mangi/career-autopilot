@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
-import { PageShell, PageHeader, Button, Input, Textarea, Card, ScoreCircle, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Textarea, Card, ScoreCircle, useToastHelpers, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Profile" },
@@ -86,7 +86,7 @@ export default function ProfilePage() {
       setEditing(null);
       toastSuccess("Saved", "Profile updated");
     } catch (err) {
-      toastError("Failed to save", err instanceof Error ? err.message : "Unknown error");
+      reportError(err, { title: "Save failed", toastError, retry: () => saveSection(section) });
     }
     setSaving(false);
   }

@@ -5,7 +5,8 @@ import { parseResume, type ResumeFormat } from "~/lib/resume-parser";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { SkeletonPage } from "~/components/Skeleton";
-import { PageShell, PageHeader, Button, Input, Textarea, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Textarea, useToastHelpers, reportError } from "~/components/ui";
+import { describeError } from "~/lib/api";
 
 export default function Upload() {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -60,8 +61,8 @@ export default function Upload() {
     return Object.keys(newErrors).length === 0;
   }
 
-  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function handleSubmit(e?: FormEvent<HTMLFormElement>) {
+    e?.preventDefault();
     if (!validateForm()) return;
 
     setIsProcessing(true);
@@ -80,8 +81,8 @@ export default function Upload() {
       setStatusText("Analysis complete, redirecting...");
       navigate(`/resumes/${result.id}`);
     } catch (err) {
-      setStatusText(err instanceof Error ? err.message : "Error: Failed to process resume");
-      toastError("Analysis failed", "Please try again");
+      setStatusText(describeError(err, "Error: Failed to process resume"));
+      reportError(err, { title: "Analysis failed", toastError, retry: () => handleSubmit() });
     } finally {
       setIsProcessing(false);
     }

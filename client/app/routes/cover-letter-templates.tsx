@@ -4,7 +4,7 @@ import { useNavigate } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { cn } from "~/lib/utils";
-import { PageShell, PageHeader, Button, Card, Input, Textarea, Modal, ModalFooter, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Card, Input, Textarea, Modal, ModalFooter, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Cover Letter Templates" },
@@ -83,8 +83,8 @@ export default function CoverLetterTemplates() {
     setSuccess("");
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(e?: React.FormEvent) {
+    e?.preventDefault();
     setError("");
     setSuccess("");
     try {
@@ -98,7 +98,7 @@ export default function CoverLetterTemplates() {
       setTimeout(() => setSuccess(""), 3000);
       resetForm();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to save");
+      reportError(err, { title: "Save failed", toastError, setError, retry: handleSubmit });
     }
   };
 
@@ -108,7 +108,7 @@ export default function CoverLetterTemplates() {
       setTemplates(templates.filter(t => t.id !== id));
       toastSuccess("Template deleted");
     } catch (err) {
-      toastError("Failed to delete", err instanceof Error ? err.message : String(err));
+      reportError(err, { title: "Delete failed", toastError });
     }
   };
 
@@ -118,7 +118,7 @@ export default function CoverLetterTemplates() {
       setTemplates(templates.map(t => t.id === id ? updated : t));
       toastSuccess("Default template updated");
     } catch (err) {
-      toastError("Failed to set default", err instanceof Error ? err.message : String(err));
+      reportError(err, { title: "Update failed", toastError });
     }
   };
 
@@ -143,7 +143,7 @@ export default function CoverLetterTemplates() {
         const result = await api.coverLetterTemplates.apply(applyingTemplate!.id, applyVariables as any);
         setApplyResult(result.rendered);
       } catch (err) {
-        toastError("Failed to apply template", err instanceof Error ? err.message : String(err));
+        reportError(err, { title: "Apply failed", toastError, retry: handleApplySubmit });
       }
       setApplying(false);
     }
@@ -181,7 +181,7 @@ export default function CoverLetterTemplates() {
         action={<Button onClick={() => { resetForm(); setShowForm(true); }}>+ New Template</Button>}
       />
 
-      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">{error}</div>}
+      {error && <ErrorBanner error={error} />}
       {success && <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm">{success}</div>}
 
       {templates.length === 0 ? (

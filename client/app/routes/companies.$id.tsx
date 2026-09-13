@@ -2,7 +2,7 @@ import type { Company, Job, JobMatchResult } from "types";
 import { useSession } from "~/lib/auth-store";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, Link } from "react-router";
-import { PageShell, PageHeader, Button, Card, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Card, useToastHelpers, reportError } from "~/components/ui";
 import { Skeleton } from "~/components/Skeleton";
 
 interface SalaryRange {
@@ -57,7 +57,7 @@ export default function CompanyDetail() {
         setLoading(false);
       } catch (err) {
         console.error("Failed to load company:", err);
-        toastError("Failed to load company");
+        reportError(err, { title: "Load failed", toastError, retry: load });
         setLoading(false);
       }
     }

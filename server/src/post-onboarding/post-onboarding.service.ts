@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
+import { withAiGateway } from '../common/ai-gateway';
 import {
   POST_ONBOARDING_SYSTEM,
   buildOnboardingPlanPrompt,
@@ -57,20 +58,22 @@ export class PostOnboardingService {
       planType: data.planType,
     });
 
-    const result = await this.aiService.chat(
-      [
-        { role: 'system', content: POST_ONBOARDING_SYSTEM },
-        { role: 'user', content: prompt },
-      ],
-      { temperature: 0.3 },
-    );
+    const parsed = await withAiGateway('PostOnboardingService.createOnboardingPlan', async () => {
+      const result = await this.aiService.chat(
+        [
+          { role: 'system', content: POST_ONBOARDING_SYSTEM },
+          { role: 'user', content: prompt },
+        ],
+        { temperature: 0.3 },
+      );
 
-    const parsed = this.aiService.parseAIResponse<{
-      milestones: any[];
-      learningGoals: any[];
-      stakeholders: any[];
-      summary: string;
-    }>(this.aiService.getResponseText(result));
+      return this.aiService.parseAIResponse<{
+        milestones: any[];
+        learningGoals: any[];
+        stakeholders: any[];
+        summary: string;
+      }>(this.aiService.getResponseText(result));
+    });
 
     return this.prisma.onboardingPlan.create({
       data: {
@@ -121,18 +124,20 @@ export class PostOnboardingService {
       startDate: data.startDate,
     });
 
-    const result = await this.aiService.chat(
-      [
-        { role: 'system', content: POST_ONBOARDING_SYSTEM },
-        { role: 'user', content: prompt },
-      ],
-      { temperature: 0.3 },
-    );
+    const parsed = await withAiGateway('PostOnboardingService.createOnboardingChecklist', async () => {
+      const result = await this.aiService.chat(
+        [
+          { role: 'system', content: POST_ONBOARDING_SYSTEM },
+          { role: 'user', content: prompt },
+        ],
+        { temperature: 0.3 },
+      );
 
-    const parsed = this.aiService.parseAIResponse<{
-      categories: any[];
-      totalCount: number;
-    }>(this.aiService.getResponseText(result));
+      return this.aiService.parseAIResponse<{
+        categories: any[];
+        totalCount: number;
+      }>(this.aiService.getResponseText(result));
+    });
 
     return this.prisma.onboardingChecklist.create({
       data: {
@@ -211,20 +216,22 @@ export class PostOnboardingService {
       jobDescription: data.jobDescription,
     });
 
-    const result = await this.aiService.chat(
-      [
-        { role: 'system', content: POST_ONBOARDING_SYSTEM },
-        { role: 'user', content: prompt },
-      ],
-      { temperature: 0.3 },
-    );
+    const parsed = await withAiGateway('PostOnboardingService.createManagerAlignment', async () => {
+      const result = await this.aiService.chat(
+        [
+          { role: 'system', content: POST_ONBOARDING_SYSTEM },
+          { role: 'user', content: prompt },
+        ],
+        { temperature: 0.3 },
+      );
 
-    const parsed = this.aiService.parseAIResponse<{
-      successMetrics: any[];
-      communicationStyle: any;
-      meetingCadence: any[];
-      expectations: string;
-    }>(this.aiService.getResponseText(result));
+      return this.aiService.parseAIResponse<{
+        successMetrics: any[];
+        communicationStyle: any;
+        meetingCadence: any[];
+        expectations: string;
+      }>(this.aiService.getResponseText(result));
+    });
 
     return this.prisma.managerAlignment.create({
       data: {
@@ -274,19 +281,21 @@ export class PostOnboardingService {
       jobDescription: data.jobDescription,
     });
 
-    const result = await this.aiService.chat(
-      [
-        { role: 'system', content: POST_ONBOARDING_SYSTEM },
-        { role: 'user', content: prompt },
-      ],
-      { temperature: 0.3 },
-    );
+    const parsed = await withAiGateway('PostOnboardingService.createNetworkMap', async () => {
+      const result = await this.aiService.chat(
+        [
+          { role: 'system', content: POST_ONBOARDING_SYSTEM },
+          { role: 'user', content: prompt },
+        ],
+        { temperature: 0.3 },
+      );
 
-    const parsed = this.aiService.parseAIResponse<{
-      contacts: any[];
-      coffeeChats: any[];
-      relationshipMap: any;
-    }>(this.aiService.getResponseText(result));
+      return this.aiService.parseAIResponse<{
+        contacts: any[];
+        coffeeChats: any[];
+        relationshipMap: any;
+      }>(this.aiService.getResponseText(result));
+    });
 
     return this.prisma.networkMap.create({
       data: {
@@ -338,19 +347,21 @@ export class PostOnboardingService {
       resumeText: data.resumeText,
     });
 
-    const result = await this.aiService.chat(
-      [
-        { role: 'system', content: POST_ONBOARDING_SYSTEM },
-        { role: 'user', content: prompt },
-      ],
-      { temperature: 0.3 },
-    );
+    const parsed = await withAiGateway('PostOnboardingService.createSkillRefresh', async () => {
+      const result = await this.aiService.chat(
+        [
+          { role: 'system', content: POST_ONBOARDING_SYSTEM },
+          { role: 'user', content: prompt },
+        ],
+        { temperature: 0.3 },
+      );
 
-    const parsed = this.aiService.parseAIResponse<{
-      recommendations: any[];
-      learningPath: any[];
-      estimatedHours: number;
-    }>(this.aiService.getResponseText(result));
+      return this.aiService.parseAIResponse<{
+        recommendations: any[];
+        learningPath: any[];
+        estimatedHours: number;
+      }>(this.aiService.getResponseText(result));
+    });
 
     return this.prisma.skillRefresh.create({
       data: {
@@ -400,19 +411,21 @@ export class PostOnboardingService {
       jobDescription: data.jobDescription,
     });
 
-    const result = await this.aiService.chat(
-      [
-        { role: 'system', content: POST_ONBOARDING_SYSTEM },
-        { role: 'user', content: prompt },
-      ],
-      { temperature: 0.3 },
-    );
+    const parsed = await withAiGateway('PostOnboardingService.createFirst90DaysTracker', async () => {
+      const result = await this.aiService.chat(
+        [
+          { role: 'system', content: POST_ONBOARDING_SYSTEM },
+          { role: 'user', content: prompt },
+        ],
+        { temperature: 0.3 },
+      );
 
-    const parsed = this.aiService.parseAIResponse<{
-      milestones: any[];
-      feedbackLoops: any[];
-      earlyWins: any[];
-    }>(this.aiService.getResponseText(result));
+      return this.aiService.parseAIResponse<{
+        milestones: any[];
+        feedbackLoops: any[];
+        earlyWins: any[];
+      }>(this.aiService.getResponseText(result));
+    });
 
     return this.prisma.first90DaysTracker.create({
       data: {

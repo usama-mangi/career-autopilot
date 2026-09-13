@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { cn } from "~/lib/utils";
-import { PageShell, PageHeader, Button, Card, ScoreBadge, Select, Textarea, Modal, ModalFooter, Input, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Card, ScoreBadge, Select, Textarea, Modal, ModalFooter, Input, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 import type { NetworkMap, NetworkContact, CoffeeChat } from "types";
 
 export const meta = () => [
@@ -55,8 +55,8 @@ export default function NetworkMap() {
     setLoading(false);
   }
 
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleCreate(e?: React.FormEvent) {
+    e?.preventDefault();
     if (!formData.companyName || !formData.roleTitle) return;
     setSaving(true);
     setError("");
@@ -71,7 +71,12 @@ export default function NetworkMap() {
       resetForm();
       toastSuccess("Network map generated", "Your contacts and coffee chats are ready");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to generate network map");
+      reportError(err, {
+        title: "Generation failed",
+        toastError,
+        setError,
+        retry: handleCreate,
+      });
     }
     setSaving(false);
   }
@@ -84,7 +89,7 @@ export default function NetworkMap() {
       if (expandedId === id) setExpandedId(null);
       toastSuccess("Network map deleted");
     } catch (err) {
-      toastError("Delete failed", err instanceof Error ? err.message : "Unknown error");
+      reportError(err, { title: "Delete failed", toastError });
     }
   }
 
@@ -111,7 +116,7 @@ export default function NetworkMap() {
         action={<Button onClick={() => setShowForm(true)}>+ New Network Map</Button>}
       />
 
-      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+      {error && <ErrorBanner error={error} onRetry={handleCreate} />}
 
       {loading ? (
         <div className="text-center py-12 text-gray-500">Loading...</div>
@@ -219,7 +224,7 @@ export default function NetworkMap() {
         size="lg"
       >
         <form onSubmit={handleCreate} className="space-y-4">
-          {error && <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+          {error && <ErrorBanner error={error} />}
           <Input
             label="Company Name"
             placeholder="e.g. Google"

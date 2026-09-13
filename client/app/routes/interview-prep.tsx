@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
-import { PageShell, PageHeader, Button, Input, Textarea, Card, Button as UIButton } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Textarea, Card, Button as UIButton, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Company Research" },
@@ -20,6 +20,7 @@ export default function InterviewPrep() {
   const { data: session, isPending } = useSession();
   const isAuthenticated = !!session;
   const navigate = useNavigate();
+  const { error: toastError } = useToastHelpers();
 
   const [briefings, setBriefings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,7 +66,12 @@ export default function InterviewPrep() {
       } as any);
       setResult(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred");
+      reportError(err, {
+        title: "Generation failed",
+        toastError,
+        setError,
+        retry: handleGenerate,
+      });
     }
     setGenerating(false);
   }
@@ -118,7 +124,7 @@ export default function InterviewPrep() {
         }
       />
 
-      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+      {error && <ErrorBanner error={error} onRetry={handleGenerate} />}
 
       {briefings.length === 0 && !result ? (
         <Card className="text-center py-12">

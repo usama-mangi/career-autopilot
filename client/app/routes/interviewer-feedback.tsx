@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { cn } from "~/lib/utils";
-import { PageShell, PageHeader, Button, Input, Textarea, Select, Card, Modal, ModalFooter, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Textarea, Select, Card, Modal, ModalFooter, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Interviewer Feedback" },
@@ -80,8 +80,8 @@ export default function InterviewerFeedback() {
     }
   }
 
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleCreate(e?: React.FormEvent) {
+    e?.preventDefault();
     if (!selectedNoteId || !formData.interviewerName || !formData.feedbackText) return;
     setSaving(true);
     setError("");
@@ -100,7 +100,7 @@ export default function InterviewerFeedback() {
       setFormData({ interviewerName: "", interviewerRole: "", rating: 3, feedbackText: "", recommendation: "hire", strengths: "", concerns: "" });
       toastSuccess("Feedback saved");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to add feedback");
+      reportError(err, { title: "Save failed", toastError, setError, retry: handleCreate });
     }
     setSaving(false);
   }
@@ -112,7 +112,7 @@ export default function InterviewerFeedback() {
       setFeedbacks(prev => prev.filter(f => f.id !== id));
       toastSuccess("Feedback deleted");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete");
+      reportError(err, { title: "Delete failed", toastError });
     }
   }
 
@@ -124,7 +124,7 @@ export default function InterviewerFeedback() {
         action={<Button onClick={() => setShowForm(true)} disabled={!selectedNoteId}>+ Add Feedback</Button>}
       />
 
-      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+      {error && <ErrorBanner error={error} />}
 
       {/* Note Selector */}
       <Card>
@@ -211,7 +211,7 @@ export default function InterviewerFeedback() {
         size="xl"
       >
         <form onSubmit={handleCreate} className="space-y-4">
-          {error && <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+          <ErrorBanner error={error} className="mb-0" />
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="Interviewer Name"

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
-import { PageShell, Button, Input, Textarea, Card, useToastHelpers } from "~/components/ui";
+import { PageShell, Button, Input, Textarea, Card, useToastHelpers, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot — Complete Your Profile" },
@@ -173,7 +173,7 @@ export default function OnboardingPage() {
       toastSuccess("Profile complete", "Welcome to Career Autopilot!");
       navigate("/");
     } catch (err) {
-      toastError("Failed to save", err instanceof Error ? err.message : "Unknown error");
+      reportError(err, { title: "Save failed", toastError, retry: handleFinish });
     }
     setLoading(false);
   }

@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { cn } from "~/lib/utils";
-import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Onboarding Checklist" },
@@ -49,8 +49,8 @@ export default function OnboardingChecklist() {
       setLoading(false);
     }
 
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleCreate(e?: React.FormEvent) {
+    e?.preventDefault();
     if (!formData.companyName || !formData.roleTitle) return;
     setSaving(true);
     setGenerating(true);
@@ -66,8 +66,12 @@ export default function OnboardingChecklist() {
       setFormData({ companyName: "", roleTitle: "", startDate: "" });
       toastSuccess("Checklist created", "Your onboarding checklist is being generated");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create checklist");
-      toastError("Creation failed", err instanceof Error ? err.message : "Please try again");
+      reportError(err, {
+        title: "Creation failed",
+        toastError,
+        setError,
+        retry: handleCreate,
+      });
     }
     setSaving(false);
     setGenerating(false);
@@ -80,7 +84,7 @@ export default function OnboardingChecklist() {
       setTrackers((prev) => prev.filter((t) => t.id !== id));
       toastSuccess("Checklist deleted");
     } catch (err) {
-      toastError("Delete failed", err instanceof Error ? err.message : "Unknown error");
+      reportError(err, { title: "Delete failed", toastError });
     }
   }
 
@@ -109,7 +113,7 @@ export default function OnboardingChecklist() {
         action={<Button onClick={() => { resetForm(); setShowForm(true); }}>+ New Checklist</Button>}
       />
 
-      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+      {error && <ErrorBanner error={error} onRetry={handleCreate} />}
 
       {trackers.length === 0 ? (
         <Card className="text-center py-12">
@@ -154,7 +158,7 @@ export default function OnboardingChecklist() {
         size="md"
       >
         <form onSubmit={handleCreate} className="space-y-4">
-          {error && <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+          {error && <ErrorBanner error={error} />}
           <Input
             label="Company Name"
             placeholder="e.g. Google"

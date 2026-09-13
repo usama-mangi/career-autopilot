@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { cn } from "~/lib/utils";
-import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, Select, ScoreBadge, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, Select, ScoreBadge, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | LinkedIn Profile Optimizer" },
@@ -67,8 +67,12 @@ export default function LinkedInProfile() {
       setResult(parsed);
       toastSuccess("Analysis complete", "Your LinkedIn profile analysis is ready");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to analyze profile");
-      toastError("Analysis failed", err instanceof Error ? err.message : "Please try again");
+      reportError(err, {
+        title: "Analysis failed",
+        toastError,
+        setError,
+        retry: handleAnalyze,
+      });
     }
     setGenerating(false);
   }
@@ -91,7 +95,7 @@ export default function LinkedInProfile() {
       const profile = await api.linkedin.get(id);
       setResult(profile);
     } catch (err) {
-      toastError("Failed to load profile", err instanceof Error ? err.message : "Unknown error");
+      reportError(err, { title: "Load failed", toastError });
     }
   }
 
@@ -102,7 +106,7 @@ export default function LinkedInProfile() {
       setSavedProfiles(prev => prev.filter(p => p.id !== id));
       toastSuccess("Profile deleted");
     } catch (err) {
-      toastError("Delete failed", err instanceof Error ? err.message : "Unknown error");
+      reportError(err, { title: "Delete failed", toastError });
     }
   }
 
@@ -138,7 +142,7 @@ export default function LinkedInProfile() {
         }
       />
 
-      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+      {error && <ErrorBanner error={error} onRetry={handleAnalyze} />}
 
       {/* Saved Profiles Sidebar */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">

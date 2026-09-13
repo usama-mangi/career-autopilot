@@ -14,6 +14,13 @@ import {
 } from '@nestjs/common';
 import { SessionGuard } from '../auth/guards/session.guard';
 import { ExtensionService } from './extension.service';
+import {
+  CreateApplicationBundleDto,
+  UpdateApplicationBundleDto,
+  CreateCommunicationLogDto,
+  CreateReferralDto,
+  ApplicationAnalyticsQueryDto,
+} from './extension.dto';
 import { BetterAuthRequest } from '../common/types';
 
 @Controller('extension')
@@ -40,7 +47,7 @@ export class ExtensionController {
 
   @Post('applications')
   @UseGuards(SessionGuard)
-  async createApplication(@Request() req: BetterAuthRequest, @Body() body: any) {
+  async createApplication(@Request() req: BetterAuthRequest, @Body() body: CreateApplicationBundleDto) {
     return this.extensionService.createApplicationBundle(req.user?.userId ?? '', {
       ...body,
       companyName: body.companyName || 'Unknown Company',
@@ -54,6 +61,20 @@ export class ExtensionController {
     return this.extensionService.getApplicationBundles(req.user?.userId ?? '', { status });
   }
 
+  // Static route before the parameterized /applications/:id — otherwise
+  // Express matches "analytics" as an id and this endpoint 404s forever.
+  @Get('applications/analytics')
+  @UseGuards(SessionGuard)
+  async getAnalytics(
+    @Request() req: BetterAuthRequest,
+    @Query() query: ApplicationAnalyticsQueryDto,
+  ) {
+    return this.extensionService.getApplicationAnalytics(req.user?.userId ?? '', {
+      startDate: query.startDate,
+      endDate: query.endDate,
+    });
+  }
+
   @Get('applications/:id')
   @UseGuards(SessionGuard)
   async getApplication(@Request() req: BetterAuthRequest, @Param('id') id: string) {
@@ -62,7 +83,7 @@ export class ExtensionController {
 
   @Patch('applications/:id')
   @UseGuards(SessionGuard)
-  async updateApplication(@Request() req: BetterAuthRequest, @Param('id') id: string, @Body() body: any) {
+  async updateApplication(@Request() req: BetterAuthRequest, @Param('id') id: string, @Body() body: UpdateApplicationBundleDto) {
     return this.extensionService.updateApplicationBundle(req.user?.userId ?? '', id, body);
   }
 
@@ -75,7 +96,7 @@ export class ExtensionController {
 
   @Post('applications/:id/comms')
   @UseGuards(SessionGuard)
-  async addCommLog(@Request() req: BetterAuthRequest, @Param('id') id: string, @Body() body: any) {
+  async addCommLog(@Request() req: BetterAuthRequest, @Param('id') id: string, @Body() body: CreateCommunicationLogDto) {
     return this.extensionService.addCommunicationLog(req.user?.userId ?? '', {
       ...body,
       applicationId: id,
@@ -90,7 +111,7 @@ export class ExtensionController {
 
   @Post('applications/:id/referral')
   @UseGuards(SessionGuard)
-  async upsertReferral(@Request() req: BetterAuthRequest, @Param('id') id: string, @Body() body: any) {
+  async upsertReferral(@Request() req: BetterAuthRequest, @Param('id') id: string, @Body() body: CreateReferralDto) {
     return this.extensionService.upsertReferral(req.user?.userId ?? '', {
       ...body,
       applicationId: id,
@@ -101,15 +122,5 @@ export class ExtensionController {
   @UseGuards(SessionGuard)
   async getReferral(@Request() req: BetterAuthRequest, @Param('id') id: string) {
     return this.extensionService.getReferral(req.user?.userId ?? '', id);
-  }
-
-  @Get('applications/analytics')
-  @UseGuards(SessionGuard)
-  async getAnalytics(
-    @Request() req: BetterAuthRequest,
-    @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string,
-  ) {
-    return this.extensionService.getApplicationAnalytics(req.user?.userId ?? '', { startDate, endDate });
   }
 }

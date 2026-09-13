@@ -2,7 +2,7 @@ import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { PageShell, PageHeader, Button, Card, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Card, useToastHelpers, reportError } from "~/components/ui";
 import { Skeleton } from "~/components/Skeleton";
 
 export const meta = () => [
@@ -53,7 +53,7 @@ export default function JobAlerts() {
       toastSuccess(enabled ? "Alert enabled" : "Alert disabled");
       setAlerts(alerts.map((a) => (a.id === id ? { ...a, enabled } : a)));
     } catch (err) {
-      toastError("Failed to update", err instanceof Error ? err.message : "Try again");
+      reportError(err, { title: "Update failed", toastError, retry: () => handleToggle(id, enabled) });
     }
   }
 
@@ -64,7 +64,7 @@ export default function JobAlerts() {
       toastSuccess("Deleted", "Job alert removed");
       setAlerts(alerts.filter((a) => a.id !== id));
     } catch (err) {
-      toastError("Failed to delete", err instanceof Error ? err.message : "Try again");
+      reportError(err, { title: "Delete failed", toastError, retry: () => handleDelete(id) });
     }
   }
 

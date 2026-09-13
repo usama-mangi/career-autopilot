@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { cn } from "~/lib/utils";
-import { PageShell, PageHeader, Button, Card, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Card, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 import type { InterviewPerformanceAnalytics, InterviewNote } from "types";
 
 export const meta = () => [
@@ -33,7 +33,7 @@ export default function InterviewAnalytics() {
       setAnalytics(data);
     } catch (err) {
       console.error("Failed to load analytics:", err);
-      setError(err instanceof Error ? err.message : "Failed to load analytics");
+      reportError(err, { title: "Load failed", toastError, setError, retry: loadAnalytics });
     } finally {
       setLoading(false);
     }
@@ -63,10 +63,14 @@ export default function InterviewAnalytics() {
   if (!analytics) {
     return (
       <PageShell>
-        <PageHeader title="Interview Analytics" subtitle="No data available" />
-        <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-          <p className="text-gray-500">Not enough interview data to generate analytics.</p>
-        </div>
+        <PageHeader title="Interview Analytics" subtitle={error ? "Couldn't load analytics" : "No data available"} />
+        {error ? (
+          <ErrorBanner error={error} onRetry={loadAnalytics} />
+        ) : (
+          <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
+            <p className="text-gray-500">Not enough interview data to generate analytics.</p>
+          </div>
+        )}
       </PageShell>
     );
   }
@@ -78,7 +82,7 @@ export default function InterviewAnalytics() {
         subtitle="Conversion funnel: Applications → Screens → Interviews → Offers → Acceptance rate"
       />
 
-      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+      {error && <ErrorBanner error={error} onRetry={loadAnalytics} />}
 
       {/* Funnel */}
       <Card className="mb-8">

@@ -3,6 +3,7 @@ import { Link, useParams, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
+import { ErrorBanner, reportError, useToastHelpers } from "~/components/ui";
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: string }> = {
   draft: { label: "Draft", color: "text-gray-600", bgColor: "bg-gray-100" },
@@ -43,6 +44,7 @@ export default function ApplicationDetail() {
   const navigate = useNavigate();
   const { data: session, isPending } = useSession();
   const isAuthenticated = !!session;
+  const { error: toastError } = useToastHelpers();
 
   const [app, setApp] = useState<JobApplication | null>(null);
   const [comms, setComms] = useState<CommunicationLog[]>([]);
@@ -95,7 +97,7 @@ export default function ApplicationDetail() {
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      reportError(err, { title: "Load failed", toastError, setError, retry: loadData });
     } finally {
       setLoading(false);
     }
@@ -108,8 +110,7 @@ export default function ApplicationDetail() {
       setTimeout(() => setSuccess(""), 3000);
       loadData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-      setTimeout(() => setError(""), 3000);
+      reportError(err, { title: "Status change failed", toastError, setError, retry: loadData });
     }
   }
 
@@ -122,8 +123,7 @@ export default function ApplicationDetail() {
       setTimeout(() => setSuccess(""), 3000);
       loadData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-      setTimeout(() => setError(""), 3000);
+      reportError(err, { title: "Update failed", toastError, setError });
     }
   }
 
@@ -144,8 +144,7 @@ export default function ApplicationDetail() {
       setTimeout(() => setSuccess(""), 3000);
       loadData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-      setTimeout(() => setError(""), 3000);
+      reportError(err, { title: "Log failed", toastError, setError });
     }
   }
 
@@ -165,8 +164,7 @@ export default function ApplicationDetail() {
       setTimeout(() => setSuccess(""), 3000);
       loadData();
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-      setTimeout(() => setError(""), 3000);
+      reportError(err, { title: "Referral failed", toastError, setError });
     }
   }
 
@@ -176,7 +174,7 @@ export default function ApplicationDetail() {
       await api.applications.delete(id!);
       navigate("/applications");
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
+      reportError(err, { title: "Delete failed", toastError, setError, retry: loadData });
     }
   }
 
@@ -211,7 +209,7 @@ export default function ApplicationDetail() {
           ← Back to Applications
         </Link>
 
-        {error && <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg text-sm">{error}</div>}
+        {error && <ErrorBanner error={error} onRetry={loadData} />}
         {success && <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-lg text-sm">{success}</div>}
 
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">

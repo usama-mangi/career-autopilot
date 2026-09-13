@@ -5,7 +5,7 @@ import { api } from "~/lib/api";
 import { cn } from "~/lib/utils";
 import { useResumeStore } from "~/lib/resume-store";
 import type { GeneratedResume } from "types";
-import { PageShell, PageHeader, Button, Input, Textarea, Card, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Textarea, Card, useToastHelpers, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Edit Resume" },
@@ -273,7 +273,7 @@ export default function ResumeEditPage() {
       toastSuccess("Resume updated", "Your changes have been saved");
       navigate(`/resumes/${id}`);
     } catch (err) {
-      toastError("Save failed", err instanceof Error ? err.message : "Unknown error");
+      reportError(err, { title: "Save failed", toastError });
     }
     setSaving(false);
   }, [id, content, contact, updateResume]);

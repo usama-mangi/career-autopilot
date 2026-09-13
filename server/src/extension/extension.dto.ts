@@ -1,9 +1,9 @@
-import { IsString, IsEmail, IsOptional, IsArray, IsBoolean, IsNumber, ValidateNested, IsIn, IsDateString, Min, Max } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsString, IsOptional, IsIn, IsDateString, IsNumber, Min, Max } from 'class-validator';
 
 export class CreateApplicationBundleDto {
   @IsString()
-  jobId: string;
+  @IsOptional()
+  jobId?: string;
 
   @IsString()
   @IsOptional()
@@ -12,6 +12,16 @@ export class CreateApplicationBundleDto {
   @IsString()
   @IsOptional()
   coverLetterId?: string;
+
+  // The controller defaults these when absent; declared so the whitelist
+  // keeps them instead of stripping them silently.
+  @IsString()
+  @IsOptional()
+  companyName?: string;
+
+  @IsString()
+  @IsOptional()
+  roleTitle?: string;
 
   @IsString()
   @IsOptional()
@@ -46,8 +56,11 @@ export class UpdateApplicationBundleDto {
 }
 
 export class CreateCommunicationLogDto {
+  // Injected from the route param (POST applications/:id/comms); optional so
+  // the client never has to send it.
   @IsString()
-  applicationId: string;
+  @IsOptional()
+  applicationId?: string;
 
   @IsString()
   @IsIn(['email', 'phone', 'message', 'in_person', 'video_call', 'linkedin', 'other'])
@@ -74,8 +87,10 @@ export class CreateCommunicationLogDto {
 }
 
 export class CreateReferralDto {
+  // Injected from the route param (POST applications/:id/referral).
   @IsString()
-  applicationId: string;
+  @IsOptional()
+  applicationId?: string;
 
   @IsString()
   employeeName: string;

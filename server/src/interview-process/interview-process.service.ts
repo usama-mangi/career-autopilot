@@ -2,6 +2,7 @@ import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 import { Prisma } from '@prisma/client';
+import { withAiGateway } from '../common/ai-gateway';
 
 @Injectable()
 export class InterviewProcessService {
@@ -231,8 +232,10 @@ export class InterviewProcessService {
     };
 
     const prompt = prompts[body.type] || prompts.custom;
-    const response = await this.aiService.chat(prompt, { temperature: 0.3 });
-    const text = this.aiService.getResponseText(response);
+    const text = await withAiGateway('InterviewProcessService.generateFollowUpEmail', async () => {
+      const response = await this.aiService.chat(prompt, { temperature: 0.3 });
+      return this.aiService.getResponseText(response);
+    });
 
     return {
       type: body.type,
@@ -398,12 +401,14 @@ Make the content specific to the role and company. Include:
 
 Return ONLY valid JSON.`;
 
-    const response = await this.aiService.chat(prompt, {
-      temperature: 0.4,
-      response_format: { type: 'json_object' },
+    const parsed = await withAiGateway('InterviewProcessService.generateCaseStudy', async () => {
+      const response = await this.aiService.chat(prompt, {
+        temperature: 0.4,
+        response_format: { type: 'json_object' },
+      });
+      const text = this.aiService.getResponseText(response);
+      return this.aiService.parseAIResponse<{ title: string; slides: any[] }>(text);
     });
-    const text = this.aiService.getResponseText(response);
-    const parsed = this.aiService.parseAIResponse<{ title: string; slides: any[] }>(text);
 
     const caseStudy = await this.prisma.caseStudy.create({
       data: {

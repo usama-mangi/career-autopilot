@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import type { Project } from "types";
-import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export default function Portfolio() {
   const { data: session, isPending } = useSession();
@@ -69,8 +69,8 @@ export default function Portfolio() {
     setSuccess("");
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(e?: React.FormEvent) {
+    e?.preventDefault();
     const isEditing = !!editingProject;
     const submitFn = isEditing ? api.portfolio.update : api.portfolio.create;
     const technologies = formData.technologies.split(",").map((t) => t.trim()).filter(Boolean);
@@ -108,8 +108,7 @@ export default function Portfolio() {
       resetForm();
       setShowForm(false);
     } catch (err: any) {
-      setError(err.message || "Failed to save");
-      setTimeout(() => setError(""), 3000);
+      reportError(err, { title: "Save failed", toastError, setError, retry: handleSubmit });
     } finally {
       setCreating(false);
       setUpdating(false);
@@ -140,7 +139,7 @@ export default function Portfolio() {
       setProjects((prev) => prev.filter((p) => p.id !== id));
       toastSuccess("Project deleted");
     } catch (err) {
-      toastError("Failed to delete", err instanceof Error ? err.message : "Unknown error");
+      reportError(err, { title: "Delete failed", toastError });
     }
   }
 
@@ -177,7 +176,7 @@ export default function Portfolio() {
         action={<Button onClick={() => { resetForm(); setShowForm(true); }}>+ Add Project</Button>}
       />
 
-      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">{error}</div>}
+      {error && <ErrorBanner error={error} />}
       {success && <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm">{success}</div>}
 
       {projects.length === 0 ? (
@@ -257,7 +256,7 @@ export default function Portfolio() {
         size="lg"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">{error}</div>}
+          {error && <ErrorBanner error={error} className="mb-0" />}
           <Input
             label="Project Title *"
             placeholder="e.g. E-commerce Platform"

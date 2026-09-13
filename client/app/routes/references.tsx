@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
-import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, Select, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, Select, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Reference Manager" },
@@ -113,7 +113,7 @@ export default function References() {
       setReferences(prev => prev.filter(r => r.id !== id));
       toastSuccess("Reference deleted");
     } catch (err) {
-      toastError("Delete failed", err instanceof Error ? err.message : "Unknown error");
+      reportError(err, { title: "Delete failed", toastError });
     }
   }
 
@@ -152,7 +152,7 @@ export default function References() {
         action={<Button onClick={() => { resetForm(); setShowForm(true); }}>+ Add Reference</Button>}
       />
 
-      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+      {error && <ErrorBanner error={error} />}
 
       {references.length === 0 ? (
         <Card className="text-center py-12">
@@ -201,7 +201,7 @@ export default function References() {
         size="lg"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+          {error && <ErrorBanner error={error} className="mb-0" />}
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="Name"

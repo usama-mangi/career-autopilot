@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
+import { withAiGateway } from '../common/ai-gateway';
 import {
   prepareCompanyBriefingInstructions,
   prepareTechnicalAssessmentInstructions,
@@ -46,10 +47,12 @@ export class InterviewPrepService {
       companyContext: body.companyContext,
     });
 
-    const aiResponse = await this.aiService.chat([{ role: 'user', content: prompt }]);
-    const result = this.aiService.parseAIResponse<CompanyBriefing>(
-      this.aiService.getResponseText(aiResponse),
-    );
+    const result = await withAiGateway('InterviewPrepService.generateCompanyBriefing', async () => {
+      const aiResponse = await this.aiService.chat([{ role: 'user', content: prompt }]);
+      return this.aiService.parseAIResponse<CompanyBriefing>(
+        this.aiService.getResponseText(aiResponse),
+      );
+    });
 
     // Save to database
     const prep = await this.prisma.interviewPrep.create({
@@ -113,10 +116,12 @@ export class InterviewPrepService {
       focusAreas: body.focusAreas,
     });
 
-    const aiResponse = await this.aiService.chat([{ role: 'user', content: prompt }]);
-    const result = this.aiService.parseAIResponse(
-      this.aiService.getResponseText(aiResponse),
-    );
+    const result = await withAiGateway('InterviewPrepService', async () => {
+      const aiResponse = await this.aiService.chat([{ role: 'user', content: prompt }]);
+      return this.aiService.parseAIResponse(
+        this.aiService.getResponseText(aiResponse),
+      );
+    });
 
     const practice = await this.prisma.technicalPractice.create({
       data: {
@@ -179,10 +184,12 @@ export class InterviewPrepService {
       questionCount: body.questionCount,
     });
 
-    const aiResponse = await this.aiService.chat([{ role: 'user', content: prompt }]);
-    const result = this.aiService.parseAIResponse(
-      this.aiService.getResponseText(aiResponse),
-    );
+    const result = await withAiGateway('InterviewPrepService', async () => {
+      const aiResponse = await this.aiService.chat([{ role: 'user', content: prompt }]);
+      return this.aiService.parseAIResponse(
+        this.aiService.getResponseText(aiResponse),
+      );
+    });
 
     const bank = await this.prisma.behavioralBank.create({
       data: {
@@ -418,10 +425,12 @@ export class InterviewPrepService {
       salaryContext: body.salaryContext,
     });
 
-    const aiResponse = await this.aiService.chat([{ role: 'user', content: prompt }]);
-    const result = this.aiService.parseAIResponse(
-      this.aiService.getResponseText(aiResponse),
-    );
+    const result = await withAiGateway('InterviewPrepService', async () => {
+      const aiResponse = await this.aiService.chat([{ role: 'user', content: prompt }]);
+      return this.aiService.parseAIResponse(
+        this.aiService.getResponseText(aiResponse),
+      );
+    });
 
     const prep = await this.prisma.interviewPrep.create({
       data: {
@@ -603,16 +612,18 @@ export class InterviewPrepService {
       questionNumber,
     });
 
-    const aiResponse = await this.aiService.chat([{ role: 'user', content: prompt }]);
-    const result = this.aiService.parseAIResponse<any>(
-      this.aiService.getResponseText(aiResponse),
-    );
+    return withAiGateway('InterviewPrepService.mockInterviewerTurn', async () => {
+      const aiResponse = await this.aiService.chat([{ role: 'user', content: prompt }]);
+      const result = this.aiService.parseAIResponse<any>(
+        this.aiService.getResponseText(aiResponse),
+      );
 
-    return {
-      message: result.message || 'Could you tell me more about that?',
-      isComplete: result.isComplete || false,
-      suggestedTopics: result.suggestedTopics,
-    };
+      return {
+        message: result.message || 'Could you tell me more about that?',
+        isComplete: result.isComplete || false,
+        suggestedTopics: result.suggestedTopics,
+      };
+    });
   }
 
   private async generateMockInterviewFeedback(
@@ -630,9 +641,11 @@ export class InterviewPrepService {
       messages: transcript,
     });
 
-    const aiResponse = await this.aiService.chat([{ role: 'user', content: prompt }]);
-    return this.aiService.parseAIResponse<any>(
-      this.aiService.getResponseText(aiResponse),
-    );
+    return withAiGateway('InterviewPrepService.mockInterviewFeedback', async () => {
+      const aiResponse = await this.aiService.chat([{ role: 'user', content: prompt }]);
+      return this.aiService.parseAIResponse<any>(
+        this.aiService.getResponseText(aiResponse),
+      );
+    });
   }
 }

@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import type { Resume, ResumeVersion } from "types";
+import { useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Resume Versions" },
@@ -17,6 +18,7 @@ export default function ResumeVersions() {
   const { data: session, isPending } = useSession();
   const isAuthenticated = !!session;
   const navigate = useNavigate();
+  const { error: toastError } = useToastHelpers();
 
   const [resume, setResume] = useState<Resume | null>(null);
   const [loading, setLoading] = useState(true);
@@ -70,8 +72,8 @@ export default function ResumeVersions() {
     loadData();
   }, [id]);
 
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleCreate(e?: React.FormEvent) {
+    e?.preventDefault();
     if (!id) return;
     setCreating(true);
     setError("");
@@ -102,7 +104,12 @@ export default function ResumeVersions() {
       setSuccess("Resume version created successfully!");
       setTimeout(() => setSuccess(""), 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create version");
+      reportError(err, {
+        title: "Failed to create version",
+        toastError,
+        setError,
+        retry: handleCreate,
+      });
     }
     setCreating(false);
   }
@@ -116,7 +123,11 @@ export default function ResumeVersions() {
       setSuccess("Primary version updated!");
       setTimeout(() => setSuccess(""), 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to set primary");
+      reportError(err, {
+        title: "Failed to set primary",
+        toastError,
+        setError,
+      });
     }
   }
 
@@ -128,7 +139,11 @@ export default function ResumeVersions() {
       setSuccess("Version deleted!");
       setTimeout(() => setSuccess(""), 2000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete version");
+      reportError(err, {
+        title: "Failed to delete version",
+        toastError,
+        setError,
+      });
     }
   }
 
@@ -203,11 +218,7 @@ export default function ResumeVersions() {
               </div>
             </div>
 
-            {error && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
-                {error}
-              </div>
-            )}
+            {error && <ErrorBanner error={error} />}
 
             {success && (
               <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm">

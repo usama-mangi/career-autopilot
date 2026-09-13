@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
+import { withAiGateway } from '../common/ai-gateway';
 
 @Injectable()
 export class LinkedInService {
@@ -124,16 +125,18 @@ Provide your analysis as a JSON object with the following structure:
   "summary": "<brief overall assessment of the profile>"
 }`;
 
-    const aiResponse = await this.aiService.chat(
-      [{ role: 'user', content: prompt }],
-      {
-        response_format: { type: 'json_object' },
-        temperature: 0.7,
-      },
-    );
+    return withAiGateway('LinkedInService.runAnalysis', async () => {
+      const aiResponse = await this.aiService.chat(
+        [{ role: 'user', content: prompt }],
+        {
+          response_format: { type: 'json_object' },
+          temperature: 0.7,
+        },
+      );
 
-    return this.aiService.parseAIResponse(
-      this.aiService.getResponseText(aiResponse),
-    );
+      return this.aiService.parseAIResponse(
+        this.aiService.getResponseText(aiResponse),
+      );
+    });
   }
 }

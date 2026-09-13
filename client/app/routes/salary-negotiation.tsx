@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { cn } from "~/lib/utils";
-import { PageShell, PageHeader, Button, Input, Textarea, Select, Card, Modal, ModalFooter, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Textarea, Select, Card, Modal, ModalFooter, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Salary Negotiation Coach" },
@@ -69,8 +69,8 @@ export default function SalaryNegotiation() {
     return Object.keys(newErrors).length === 0;
   }
 
-  async function handleCreate(e: FormEvent) {
-    e.preventDefault();
+  async function handleCreate(e?: FormEvent) {
+    e?.preventDefault();
     if (!validateForm()) return;
     setSaving(true);
     setErrors({});
@@ -85,7 +85,12 @@ export default function SalaryNegotiation() {
       resetForm();
       toastSuccess("Strategy generated", "Your negotiation coach is ready");
     } catch (err) {
-      setErrors({ general: err instanceof Error ? err.message : "Failed to generate strategy" });
+      reportError(err, {
+        title: "Generation failed",
+        toastError,
+        setError: (message) => setErrors({ general: message }),
+        retry: handleCreate,
+      });
     }
     setSaving(false);
   }
@@ -98,7 +103,7 @@ export default function SalaryNegotiation() {
       if (expandedId === id) setExpandedId(null);
       toastSuccess("Deleted", "Coach removed");
     } catch (err) {
-      toastError("Failed to delete", err instanceof Error ? err.message : "Unknown error");
+      reportError(err, { title: "Delete failed", toastError });
     }
   }
 
@@ -349,7 +354,7 @@ export default function SalaryNegotiation() {
             onChange={(e) => handleInputChange("resumeText", e.target.value)}
           />
 
-          {errors.general && <p className="text-sm text-red-600">{errors.general}</p>}
+          {errors.general && <ErrorBanner error={errors.general} onRetry={handleCreate} className="mb-0" />}
 
           <ModalFooter
             actions={[

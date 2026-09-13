@@ -1,7 +1,7 @@
 import { useState, type FormEvent, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { signUp, useSession } from "~/lib/auth-store";
-import { PageShell, PageHeader, Button, Input, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Register" },
@@ -35,7 +35,7 @@ export default function Register() {
       await signUp.email({ email, password, name: name || "" });
       // useSession will update automatically via atom listener
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Registration failed.");
+      reportError(err, { title: "Registration failed", toastError, setError });
       setLoading(false);
     }
   }
@@ -60,11 +60,7 @@ export default function Register() {
           subtitle="Start your job search journey"
         />
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">
-            {error}
-          </div>
-        )}
+        {error && <ErrorBanner error={error} />}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <Input

@@ -4,7 +4,7 @@ import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { cn } from "~/lib/utils";
 import type { OfferItem } from "types";
-import { PageShell, PageHeader, Button, Input, Textarea, Select, useToastHelpers, Modal, ModalFooter, ScoreBadge, Card, ScoreCell } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Textarea, Select, useToastHelpers, Modal, ModalFooter, ScoreBadge, Card, ScoreCell, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Decision Framework" },
@@ -114,8 +114,8 @@ export default function DecisionFramework() {
     setOffers((prev) => prev.filter((o) => o.id !== id));
   }
 
-  async function handleCreate(e: FormEvent) {
-    e.preventDefault();
+  async function handleCreate(e?: FormEvent) {
+    e?.preventDefault();
     if (!decisionName.trim() || offers.some((o) => !o.name.trim())) return;
     const totalWeight = criteria.reduce((sum, c) => sum + (c.weight || 0), 0);
     if (totalWeight !== 100) {
@@ -155,7 +155,12 @@ export default function DecisionFramework() {
         toastSuccess("Decision framework created");
       }
     } catch (err) {
-      setErrors({ general: err instanceof Error ? err.message : "Failed to create" });
+      reportError(err, {
+        title: "Creation failed",
+        toastError,
+        setError: (message) => setErrors({ general: message }),
+        retry: handleCreate,
+      });
     }
     setSaving(false);
   }
@@ -168,7 +173,7 @@ export default function DecisionFramework() {
       if (expandedId === id) setExpandedId(null);
       toastSuccess("Deleted", "Framework removed");
     } catch (err) {
-      toastError("Failed to delete", err instanceof Error ? err.message : "Unknown error");
+      reportError(err, { title: "Delete failed", toastError });
     }
   }
 
@@ -214,9 +219,7 @@ export default function DecisionFramework() {
         action={<Button onClick={() => setShowForm(true)}>+ New Decision</Button>}
       />
 
-      {errors.general && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">{errors.general}</div>
-      )}
+      {errors.general && <ErrorBanner error={errors.general} onRetry={handleCreate} />}
 
       {decisions.length === 0 ? (
         <div className="text-center py-12 bg-white rounded-xl border border-gray-200">

@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import type { Resume } from "types";
-import { PageShell, PageHeader, Button, Input, Textarea, useToastHelpers, Modal } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Textarea, useToastHelpers, Modal, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Cover Letter" },
@@ -79,7 +79,11 @@ export default function CoverLetter() {
       setCoverLetterId(result.id);
       toastSuccess("Cover letter generated");
     } catch (err) {
-      toastError("Failed to generate", err instanceof Error ? err.message : "Unknown error");
+      reportError(err, {
+        title: "Failed to generate",
+        toastError,
+        retry: handleGenerate,
+      });
     }
     setGenerating(false);
   }

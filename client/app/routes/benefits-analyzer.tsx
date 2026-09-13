@@ -4,7 +4,7 @@ import { useNavigate } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { cn } from "~/lib/utils";
-import { PageShell, PageHeader, Button, Input, Card, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Card, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Benefits Analyzer" },
@@ -59,8 +59,8 @@ export default function BenefitsAnalyzer() {
     setFormData(p => ({ ...p, benefits: p.benefits.filter((_, i) => i !== idx) }));
   }
 
-  async function handleAnalyze(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleAnalyze(e?: React.FormEvent) {
+    e?.preventDefault();
     if (!formData.roleTitle || !formData.companyName || !formData.salary || formData.benefits.length === 0) return;
     setSaving(true);
     setError("");
@@ -74,8 +74,12 @@ export default function BenefitsAnalyzer() {
       setResult(data);
       toastSuccess("Analysis complete", "Your benefits analysis is ready");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to analyze benefits");
-      toastError("Analysis failed", err instanceof Error ? err.message : "Please try again");
+      reportError(err, {
+        title: "Analysis failed",
+        toastError,
+        setError,
+        retry: handleAnalyze,
+      });
     }
     setSaving(false);
   }
@@ -87,7 +91,7 @@ export default function BenefitsAnalyzer() {
         subtitle="Compare and analyze employee benefits packages against market standards"
       />
 
-      {error && <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+      {error && <ErrorBanner error={error} onRetry={handleAnalyze} />}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Form */}

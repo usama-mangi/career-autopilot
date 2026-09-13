@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import type { Resume } from "types";
-import { PageShell, PageHeader, Button, Textarea, Input, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Textarea, Input, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Tailored Resume Builder" },
@@ -74,7 +74,12 @@ export default function TailoredResume() {
         navigate(`/resumes/${id}`);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred");
+      reportError(err, {
+        title: "Generation failed",
+        toastError,
+        setError,
+        retry: handleGenerate,
+      });
     }
     setGenerating(false);
   }
@@ -133,11 +138,7 @@ export default function TailoredResume() {
         </div>
       )}
 
-      {error && (
-        <div className="w-full max-w-4xl p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
-          {error}
-        </div>
-      )}
+      {error && <ErrorBanner error={error} onRetry={handleGenerate} className="w-full max-w-4xl" />}
     </PageShell>
   );
 }

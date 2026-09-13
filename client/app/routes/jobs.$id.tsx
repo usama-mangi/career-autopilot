@@ -4,7 +4,7 @@ import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { useJobsStore } from "~/lib/jobs-store";
 import { cn } from "~/lib/utils";
-import { PageShell, Button, Modal, ModalFooter, useToastHelpers, ScoreBadge } from "~/components/ui";
+import { PageShell, Button, Modal, ModalFooter, useToastHelpers, ScoreBadge, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Job Details" },
@@ -96,7 +96,7 @@ export default function JobDetailPage() {
       setJob(updated);
       useJobsStore.getState().toggleBookmark(id);
     } catch (err) {
-      toastError("Failed", err instanceof Error ? err.message : "Unknown error");
+      reportError(err, { title: "Action failed", toastError, retry: handleToggleBookmark });
     }
   }
 
@@ -117,7 +117,7 @@ export default function JobDetailPage() {
       toastSuccess("Application created", "Redirecting to application details...");
       navigate(`/applications/${newApp.id}`);
     } catch (err) {
-      toastError("Failed", err instanceof Error ? err.message : "Unknown error");
+      reportError(err, { title: "Application failed", toastError, retry: handleApplyConfirm });
     }
     setApplying(false);
   }

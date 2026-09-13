@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
-import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, Select, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, Select, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Mock Interview" },
@@ -98,7 +98,12 @@ export default function MockInterview() {
       setFeedback(result);
       setShowFeedback(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to get feedback");
+      reportError(err, {
+        title: "Feedback failed",
+        toastError,
+        setError,
+        retry: handleSubmit,
+      });
     }
     setGenerating(false);
   }
@@ -152,7 +157,7 @@ export default function MockInterview() {
         action={<Button onClick={() => setActiveInterview(null)}>+ New Interview</Button>}
       />
 
-      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+      {error && <ErrorBanner error={error} onRetry={handleSubmit} />}
 
       {/* Interview List / Setup */}
       {!activeInterview && (

@@ -1,6 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
+import { withAiGateway } from '../common/ai-gateway';
 import {
   buildNegotiationCoachPrompt,
   buildEquityCalculatorPrompt,
@@ -41,25 +42,27 @@ export class OfferNegotiationService {
     offers: OfferItem[];
     weights?: OfferComparisonItem['weights'];
   }) {
-    const result = await this.aiService.chat(
-      [
-        { role: 'system', content: NEGOTIATION_COACH_SYSTEM },
-        {
-          role: 'user',
-          content: `Compare these job offers and provide weighted scores for each.\n\nOffers:\n${JSON.stringify(data.offers, null, 2)}\n\nWeights:\n${JSON.stringify(data.weights || { compensation: 30, growth: 20, culture: 20, workLifeBalance: 15, location: 10, benefits: 5 }, null, 2)}\n\nScore each offer 0-10 on each criterion. Calculate weighted totals. Provide a recommendation. Return JSON with { scores: [{ offerName, totalScore, criterionScores: [{ criterion, score, maxScore, notes }] }], recommendation: string }.`,
-        },
-      ],
-      { temperature: 0.3 },
-    );
+    const parsed = await withAiGateway('OfferNegotiationService.createComparison', async () => {
+      const result = await this.aiService.chat(
+        [
+          { role: 'system', content: NEGOTIATION_COACH_SYSTEM },
+          {
+            role: 'user',
+            content: `Compare these job offers and provide weighted scores for each.\n\nOffers:\n${JSON.stringify(data.offers, null, 2)}\n\nWeights:\n${JSON.stringify(data.weights || { compensation: 30, growth: 20, culture: 20, workLifeBalance: 15, location: 10, benefits: 5 }, null, 2)}\n\nScore each offer 0-10 on each criterion. Calculate weighted totals. Provide a recommendation. Return JSON with { scores: [{ offerName, totalScore, criterionScores: [{ criterion, score, maxScore, notes }] }], recommendation: string }.`
+          },
+        ],
+        { temperature: 0.3 },
+      );
 
-    const parsed = this.aiService.parseAIResponse<{
-      scores: Array<{
-        offerName: string;
-        totalScore: number;
-        criterionScores: Array<{ criterion: string; score: number; maxScore: number; notes: string }>;
-      }>;
-      recommendation: string;
-    }>(this.aiService.getResponseText(result));
+      return this.aiService.parseAIResponse<{
+        scores: Array<{
+          offerName: string;
+          totalScore: number;
+          criterionScores: Array<{ criterion: string; score: number; maxScore: number; notes: string }>;
+        }>;
+        recommendation: string;
+      }>(this.aiService.getResponseText(result));
+    });
 
     return this.prisma.offerComparison.create({
       data: {
@@ -117,20 +120,22 @@ export class OfferNegotiationService {
       offerDetails: data.offerDetails,
     });
 
-    const result = await this.aiService.chat(
-      [
-        { role: 'system', content: NEGOTIATION_COACH_SYSTEM },
-        { role: 'user', content: prompt },
-      ],
-      { temperature: 0.3 },
-    );
+    const parsed = await withAiGateway('OfferNegotiationService.createCoach', async () => {
+      const result = await this.aiService.chat(
+        [
+          { role: 'system', content: NEGOTIATION_COACH_SYSTEM },
+          { role: 'user', content: prompt },
+        ],
+        { temperature: 0.3 },
+      );
 
-    const parsed = this.aiService.parseAIResponse<{
-      marketData: NegotiationCoach['marketData'];
-      strategy: NegotiationCoach['strategy'];
-      emailTemplates: NegotiationCoach['emailTemplates'];
-      scripts: NegotiationCoach['scripts'];
-    }>(this.aiService.getResponseText(result));
+      return this.aiService.parseAIResponse<{
+        marketData: NegotiationCoach['marketData'];
+        strategy: NegotiationCoach['strategy'];
+        emailTemplates: NegotiationCoach['emailTemplates'];
+        scripts: NegotiationCoach['scripts'];
+      }>(this.aiService.getResponseText(result));
+    });
 
     return this.prisma.negotiationCoach.create({
       data: {
@@ -187,15 +192,17 @@ export class OfferNegotiationService {
       equityDetails: data.equityDetails,
     });
 
-    const result = await this.aiService.chat(
-      [
-        { role: 'system', content: 'You are an equity compensation expert specializing in startup and public company equity packages. Return valid JSON only.' },
-        { role: 'user', content: prompt },
-      ],
-      { temperature: 0.2 },
-    );
+    return withAiGateway('OfferNegotiationService.calculateEquity', async () => {
+      const result = await this.aiService.chat(
+        [
+          { role: 'system', content: 'You are an equity compensation expert specializing in startup and public company equity packages. Return valid JSON only.' },
+          { role: 'user', content: prompt },
+        ],
+        { temperature: 0.2 },
+      );
 
-    return this.aiService.parseAIResponse(this.aiService.getResponseText(result));
+      return this.aiService.parseAIResponse(this.aiService.getResponseText(result));
+    });
   }
 
   // ─── Benefits Analyzer ───
@@ -213,15 +220,17 @@ export class OfferNegotiationService {
       salary: data.salary,
     });
 
-    const result = await this.aiService.chat(
-      [
-        { role: 'system', content: 'You are a benefits and total compensation analyst. Return valid JSON only.' },
-        { role: 'user', content: prompt },
-      ],
-      { temperature: 0.2 },
-    );
+    return withAiGateway('OfferNegotiationService.analyzeBenefits', async () => {
+      const result = await this.aiService.chat(
+        [
+          { role: 'system', content: 'You are a benefits and total compensation analyst. Return valid JSON only.' },
+          { role: 'user', content: prompt },
+        ],
+        { temperature: 0.2 },
+      );
 
-    return this.aiService.parseAIResponse(this.aiService.getResponseText(result));
+      return this.aiService.parseAIResponse(this.aiService.getResponseText(result));
+    });
   }
 
   // ─── Decision Framework ───
@@ -237,22 +246,24 @@ export class OfferNegotiationService {
       offers: data.offers,
     });
 
-    const result = await this.aiService.chat(
-      [
-        { role: 'system', content: 'You are a career decision strategist. Return valid JSON only.' },
-        { role: 'user', content: prompt },
-      ],
-      { temperature: 0.3 },
-    );
+    const parsed = await withAiGateway('OfferNegotiationService.createDecision', async () => {
+      const result = await this.aiService.chat(
+        [
+          { role: 'system', content: 'You are a career decision strategist. Return valid JSON only.' },
+          { role: 'user', content: prompt },
+        ],
+        { temperature: 0.3 },
+      );
 
-    const parsed = this.aiService.parseAIResponse<{
-      summary: string;
-      winner: string;
-      winnerReason: string;
-      offerScores: OfferScore[];
-      sensitivityAnalysis: unknown[];
-      recommendations: string[];
-    }>(this.aiService.getResponseText(result));
+      return this.aiService.parseAIResponse<{
+        summary: string;
+        winner: string;
+        winnerReason: string;
+        offerScores: OfferScore[];
+        sensitivityAnalysis: unknown[];
+        recommendations: string[];
+      }>(this.aiService.getResponseText(result));
+    });
 
     return this.prisma.offerDecision.create({
       data: {
@@ -301,20 +312,22 @@ export class OfferNegotiationService {
   }) {
     const prompt = buildResignationLetterPrompt(data);
 
-    const result = await this.aiService.chat(
-      [
-        { role: 'system', content: 'You are an expert career transition advisor. Return valid JSON only.' },
-        { role: 'user', content: prompt },
-      ],
-      { temperature: 0.4 },
-    );
+    const parsed = await withAiGateway('OfferNegotiationService.generateResignationLetter', async () => {
+      const result = await this.aiService.chat(
+        [
+          { role: 'system', content: 'You are an expert career transition advisor. Return valid JSON only.' },
+          { role: 'user', content: prompt },
+        ],
+        { temperature: 0.4 },
+      );
 
-    const parsed = this.aiService.parseAIResponse<{
-      letter: string;
-      transitionPlan: string;
-      tips: string[];
-      dosAndDonts: { dos: string[]; donts: string[] };
-    }>(this.aiService.getResponseText(result));
+      return this.aiService.parseAIResponse<{
+        letter: string;
+        transitionPlan: string;
+        tips: string[];
+        dosAndDonts: { dos: string[]; donts: string[] };
+      }>(this.aiService.getResponseText(result));
+    });
 
     return this.prisma.resignationLetter.create({
       data: {

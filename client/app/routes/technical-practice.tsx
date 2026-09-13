@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { cn } from "~/lib/utils";
-import { PageShell, PageHeader, Button, Input, Textarea, Card, ScoreBadge, Select, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Textarea, Card, ScoreBadge, Select, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 import type { TechnicalAssessment } from "types";
 
 export const meta = () => [
@@ -61,8 +61,8 @@ export default function TechnicalPractice() {
     setLoading(false);
   }
 
-  async function handleGenerate(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleGenerate(e?: React.FormEvent) {
+    e?.preventDefault();
     if (!roleTitle.trim()) return;
     setGenerating(true);
     setError("");
@@ -78,8 +78,12 @@ export default function TechnicalPractice() {
       setResult(data);
       toastSuccess("Practice generated", "Your technical practice session is ready");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred");
-      toastError("Generation failed", err instanceof Error ? err.message : "Please try again");
+      reportError(err, {
+        title: "Generation failed",
+        toastError,
+        setError,
+        retry: handleGenerate,
+      });
     }
     setGenerating(false);
   }
@@ -100,7 +104,7 @@ export default function TechnicalPractice() {
       setPractices((prev) => prev.filter((p) => p.id !== id));
       toastSuccess("Practice deleted");
     } catch (err) {
-      toastError("Delete failed", err instanceof Error ? err.message : "Unknown error");
+      reportError(err, { title: "Delete failed", toastError });
     }
   }
 
@@ -131,7 +135,7 @@ export default function TechnicalPractice() {
         action={<Button variant="secondary" onClick={() => { setResult(null); setRoleTitle(""); setJobDescription(""); setResumeText(""); }}>New Practice</Button>}
       />
 
-      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+      {error && <ErrorBanner error={error} onRetry={handleGenerate} />}
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Sidebar - Saved Practices */}

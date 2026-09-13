@@ -2,7 +2,7 @@ import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router";
-import { PageShell, PageHeader, Button, Card, Input, Select, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Card, Input, Select, useToastHelpers, reportError } from "~/components/ui";
 import { Skeleton } from "~/components/Skeleton";
 
 export const meta = () => [
@@ -59,8 +59,8 @@ export default function SavedSearches() {
     load();
   }, [isAuthenticated]);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(e?: React.FormEvent) {
+    e?.preventDefault();
     try {
       const payload = {
         name: formData.name,
@@ -80,7 +80,7 @@ export default function SavedSearches() {
       const data = await api.jobs.savedSearches.list();
       setSearches(data || []);
     } catch (err) {
-      toastError("Failed to save", err instanceof Error ? err.message : "Try again");
+      reportError(err, { title: "Save failed", toastError, retry: handleSubmit });
     }
   }
 
@@ -91,7 +91,7 @@ export default function SavedSearches() {
       toastSuccess("Deleted", "Saved search removed");
       setSearches(searches.filter((s) => s.id !== id));
     } catch (err) {
-      toastError("Failed to delete", err instanceof Error ? err.message : "Try again");
+      reportError(err, { title: "Delete failed", toastError, retry: () => handleDelete(id) });
     }
   }
 
@@ -100,7 +100,7 @@ export default function SavedSearches() {
       await api.jobs.savedSearches.run(id);
       toastSuccess("Search running", "Results will appear on the Jobs page");
     } catch (err) {
-      toastError("Failed to run", err instanceof Error ? err.message : "Try again");
+      reportError(err, { title: "Run failed", toastError, retry: () => handleRun(id) });
     }
   }
 

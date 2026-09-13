@@ -4,7 +4,7 @@ import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { cn } from "~/lib/utils";
 import type { Resume, MultiJdResult } from "types";
-import { PageShell, PageHeader, Button, Input, Textarea, ScoreBadge, ScoreCell, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Textarea, ScoreBadge, ScoreCell, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Multi-JD Comparison" },
@@ -116,7 +116,12 @@ export default function MultiJd() {
       const parsed = await api.resumes.multiJd(id, { jobEntries: valid });
       setResult(parsed);
     } catch (err) {
-      setErrors({ general: err instanceof Error ? err.message : "An unexpected error occurred" });
+      reportError(err, {
+        title: "Comparison failed",
+        toastError,
+        setError: (message) => setErrors({ general: message }),
+        retry: handleCompare,
+      });
     }
     setGenerating(false);
   }
@@ -204,9 +209,7 @@ export default function MultiJd() {
             + Add Another Job
           </button>
 
-          {errors.general && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">{errors.general}</div>
-          )}
+          {errors.general && <ErrorBanner error={errors.general} onRetry={handleCompare} className="mb-0" />}
 
           <Button onClick={handleCompare} disabled={jobEntries.every((j) => !j.title.trim()) || generating}>
             Compare Across Jobs

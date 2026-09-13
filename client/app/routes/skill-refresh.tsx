@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
-import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Skill Refresh Recommendations" },
@@ -72,8 +72,8 @@ export default function SkillRefresh() {
     setFormData((p) => ({ ...p, techStack: p.techStack.filter((_, i) => i !== idx) }));
   }
 
-  async function handleCreate(e: FormEvent) {
-    e.preventDefault();
+  async function handleCreate(e?: FormEvent) {
+    e?.preventDefault();
     if (!formData.companyName || !formData.roleTitle || formData.techStack.length === 0) return;
     setSaving(true);
     setError("");
@@ -89,7 +89,12 @@ export default function SkillRefresh() {
       resetForm();
       toastSuccess("Skill refresh generated", "Your learning path is ready");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to generate skill refresh");
+      reportError(err, {
+        title: "Generation failed",
+        toastError,
+        setError,
+        retry: handleCreate,
+      });
     }
     setSaving(false);
   }
@@ -102,7 +107,7 @@ export default function SkillRefresh() {
       if (expandedId === id) setExpandedId(null);
       toastSuccess("Skill refresh deleted");
     } catch (err) {
-      toastError("Delete failed", err instanceof Error ? err.message : "Unknown error");
+      reportError(err, { title: "Delete failed", toastError });
     }
   }
 
@@ -131,7 +136,7 @@ export default function SkillRefresh() {
         action={<Button onClick={() => { resetForm(); setShowForm(true); }}>+ New Skill Refresh</Button>}
       />
 
-      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+      {error && <ErrorBanner error={error} onRetry={handleCreate} />}
 
       {skills.length === 0 ? (
         <Card className="text-center py-12">
@@ -170,7 +175,7 @@ export default function SkillRefresh() {
         size="lg"
       >
         <form onSubmit={handleCreate} className="space-y-4">
-          {error && <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+          {error && <ErrorBanner error={error} />}
           <Input
             label="Company Name"
             placeholder="e.g. Google"

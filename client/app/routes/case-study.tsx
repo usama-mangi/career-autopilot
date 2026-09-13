@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
-import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, Select, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, Select, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Case Study Builder" },
@@ -131,7 +131,7 @@ export default function CaseStudyComponent() {
       setStudies(prev => prev.filter(s => s.id !== id));
       toastSuccess("Case study deleted");
     } catch (err) {
-      toastError("Delete failed", err instanceof Error ? err.message : "Unknown error");
+      reportError(err, { title: "Delete failed", toastError });
     }
   }
 
@@ -143,7 +143,11 @@ export default function CaseStudyComponent() {
       setEditingStudy(result);
       toastSuccess("Content generated", "AI has enhanced your case study");
     } catch (err) {
-      toastError("Generation failed", err instanceof Error ? err.message : "Please try again");
+      reportError(err, {
+        title: "Generation failed",
+        toastError,
+        retry: handleGenerate,
+      });
     }
     setGenerating(false);
   }
@@ -171,7 +175,7 @@ export default function CaseStudyComponent() {
         action={<Button onClick={() => { resetForm(); setShowForm(true); }}>+ New Case Study</Button>}
       />
 
-      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+      {error && <ErrorBanner error={error} onRetry={handleGenerate} />}
       {success && <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm">{success}</div>}
 
       {studies.length === 0 && !viewingStudy ? (
@@ -285,7 +289,7 @@ export default function CaseStudyComponent() {
       {/* Create/Edit Modal */}
       <Modal isOpen={showForm} onClose={() => { setShowForm(false); resetForm(); }} title={editingStudy ? "Edit Case Study" : "New Case Study"} size="xl">
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+          {error && <ErrorBanner error={error} />}
           <div className="grid grid-cols-2 gap-4">
             <Input label="Title *" placeholder="e.g. E-commerce Platform Redesign" value={formData.title} onChange={e => setFormData({...formData, title: e.target.value})} required />
             <Input label="Company *" placeholder="e.g. Google" value={formData.company} onChange={e => setFormData({...formData, company: e.target.value})} required />

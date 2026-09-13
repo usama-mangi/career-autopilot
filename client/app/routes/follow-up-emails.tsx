@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { cn } from "~/lib/utils";
-import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, Select, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, Select, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Follow-up Email Templates" },
@@ -108,8 +108,8 @@ export default function FollowUpEmails() {
     setSaving(false);
   }
 
-  async function handleGenerate(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleGenerate(e?: React.FormEvent) {
+    e?.preventDefault();
     setGenerating(true);
     setError("");
     try {
@@ -128,7 +128,12 @@ export default function FollowUpEmails() {
       setShowForm(true);
       setSuccess("Email generated! Review and edit before saving.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to generate email");
+      reportError(err, {
+        title: "Generation failed",
+        toastError,
+        setError,
+        retry: handleGenerate,
+      });
     }
     setGenerating(false);
   }
@@ -167,7 +172,7 @@ export default function FollowUpEmails() {
         }
       />
 
-      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+      {error && <ErrorBanner error={error} onRetry={handleGenerate} />}
       {success && <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm">{success}</div>}
 
       {/* Filter Tabs */}
@@ -227,7 +232,7 @@ export default function FollowUpEmails() {
         size="xl"
       >
         <form onSubmit={handleCreate} className="space-y-4">
-          {error && <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+          {error && <ErrorBanner error={error} />}
           <div className="grid grid-cols-2 gap-4">
             <Select
               label="Linked Interview Note"
@@ -277,7 +282,7 @@ export default function FollowUpEmails() {
         size="lg"
       >
         <form onSubmit={handleGenerate} className="space-y-4">
-          {error && <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+          {error && <ErrorBanner error={error} />}
           <Select
             label="Linked Interview Note"
             value={genData.interviewNoteId}

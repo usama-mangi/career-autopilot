@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
-import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, Select, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, Select, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Resignation Letter Generator" },
@@ -82,8 +82,12 @@ export default function ResignationLetter() {
       setLetter(result);
       toastSuccess("Letter generated", "Your resignation letter is ready");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to generate letter");
-      toastError("Generation failed", err instanceof Error ? err.message : "Please try again");
+      reportError(err, {
+        title: "Generation failed",
+        toastError,
+        setError,
+        retry: handleGenerate,
+      });
     }
     setGenerating(false);
   }
@@ -138,7 +142,7 @@ export default function ResignationLetter() {
         }
       />
 
-      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+      {error && <ErrorBanner error={error} onRetry={handleGenerate} />}
       {success && <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm">{success}</div>}
 
       {!letter && !generating ? (

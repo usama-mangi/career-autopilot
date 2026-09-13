@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
-import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, Select, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, Select, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Interview Cheat Sheet" },
@@ -67,8 +67,12 @@ export default function InterviewCheatSheet() {
         setShowForm(false);
         resetForm();
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to generate");
-        toastError("Generation failed", err instanceof Error ? err.message : "Please try again");
+        reportError(err, {
+          title: "Generation failed",
+          toastError,
+          setError,
+          retry: handleGenerate,
+        });
       }
       setGenerating(false);
     }
@@ -80,7 +84,7 @@ export default function InterviewCheatSheet() {
         setSheets(prev => prev.filter(s => s.id !== id));
         toastSuccess("Deleted");
       } catch (err) {
-        toastError("Delete failed", err instanceof Error ? err.message : "Unknown error");
+        reportError(err, { title: "Delete failed", toastError });
       }
     }
 
@@ -103,7 +107,7 @@ export default function InterviewCheatSheet() {
         action={<Button onClick={() => { resetForm(); setShowForm(true); }}>+ New Cheat Sheet</Button>}
       />
 
-      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+      {error && <ErrorBanner error={error} onRetry={handleGenerate} />}
       {success && <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm">{success}</div>}
 
       {sheets.length === 0 ? (
@@ -149,7 +153,7 @@ export default function InterviewCheatSheet() {
         size="xl"
       >
         <form onSubmit={handleGenerate} className="space-y-4">
-          {error && <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+          {error && <ErrorBanner error={error} />}
           <Input
             label="Company Name"
             placeholder="e.g. Google"

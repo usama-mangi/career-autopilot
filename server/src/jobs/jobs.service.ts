@@ -6,6 +6,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
 import { RedisService } from '../redis/redis.service';
 import { prepareJobMatchInstructions, prepareBatchJobMatchInstructions, prepareSkillGapInstructions } from '../ai/prompts';
+import { AiUnavailableException } from '../common/ai-gateway';
 
 export interface JobSearchParams {
   keywords?: string[];
@@ -879,6 +880,18 @@ export class JobsService {
   }
 
   /**
+   * Map unexpected AI failures to 502 Bad Gateway. Existing HttpExceptions
+   * (e.g. 404 NotFoundException) are returned as-is so their status survives.
+   * Shares the message/exception contract with src/common/ai-gateway.ts.
+   */
+  private toBadGateway(error: unknown): HttpException {
+    if (error instanceof HttpException) return error;
+    const message = error instanceof Error ? error.message : String(error);
+    this.logger.error(`AI request failed: ${message}`);
+    return new AiUnavailableException();
+  }
+
+  /**
    * Get job match analysis between a resume and a job
    */
   async analyzeJobMatch(
@@ -910,13 +923,14 @@ export class JobsService {
       userSkills: this.extractSkillsFromResume(resume),
     });
 
-    const aiResponse = await this.aiService.chat([
-      { role: 'user', content: prompt },
-    ]);
-
-    const result = this.aiService.parseAIResponse(this.aiService.getResponseText(aiResponse));
-
-    return result;
+    try {
+      const aiResponse = await this.aiService.chat([
+        { role: 'user', content: prompt },
+      ]);
+      return this.aiService.parseAIResponse(this.aiService.getResponseText(aiResponse));
+    } catch (error) {
+      throw this.toBadGateway(error);
+    }
       }
 
       /**
@@ -955,12 +969,14 @@ export class JobsService {
           })),
         });
 
-        const aiResponse = await this.aiService.chat([
-          { role: 'user', content: prompt },
-        ]);
-
-        const results = this.aiService.parseAIResponse(this.aiService.getResponseText(aiResponse));
-        return results as any[];
+        try {
+          const aiResponse = await this.aiService.chat([
+            { role: 'user', content: prompt },
+          ]);
+          return (this.aiService.parseAIResponse(this.aiService.getResponseText(aiResponse))) as any[];
+        } catch (error) {
+          throw this.toBadGateway(error);
+        }
       }
 
       /**

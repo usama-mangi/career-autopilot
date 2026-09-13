@@ -3,7 +3,7 @@ import { useNavigate } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { cn } from "~/lib/utils";
-import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, Select, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, Select, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Offer Comparison" },
@@ -116,8 +116,8 @@ export default function OfferComparison() {
     });
   }
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit(e?: React.FormEvent) {
+    e?.preventDefault();
     if (!formData.name.trim() || formData.offers.some((o: any) => !o.name.trim())) return;
     const totalWeight = formData.criteria.reduce((sum: number, c: any) => sum + (c.weight || 0), 0);
     if (totalWeight !== 100) {
@@ -140,7 +140,7 @@ export default function OfferComparison() {
       resetForm();
       loadComparisons();
     } catch (err: any) {
-      setError(err.message || "Failed to save");
+      reportError(err, { title: "Save failed", toastError, setError, retry: handleSubmit });
     }
     setGenerating(false);
   }
@@ -152,7 +152,7 @@ export default function OfferComparison() {
       setComparisons((prev) => prev.filter((c) => c.id !== id));
       toastSuccess("Comparison deleted");
     } catch (err) {
-      toastError("Delete failed", err instanceof Error ? err.message : "Unknown error");
+      reportError(err, { title: "Delete failed", toastError });
     }
   }
 
@@ -179,7 +179,7 @@ export default function OfferComparison() {
         action={<Button onClick={() => { resetForm(); setShowForm(true); }}>+ New Comparison</Button>}
       />
 
-      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+      {error && <ErrorBanner error={error} />}
       {success && <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm">{success}</div>}
 
       {comparisons.length === 0 ? (
@@ -299,7 +299,7 @@ export default function OfferComparison() {
       {/* Create/Edit Modal */}
       <Modal isOpen={showForm} onClose={() => { setShowForm(false); resetForm(); }} title={editingComparison ? "Edit Comparison" : "New Offer Comparison"} size="xl">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {error && <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+          {error && <ErrorBanner error={error} className="mb-0" />}
           <Input label="Comparison Name" placeholder="e.g. Senior Engineer Offers - Q1 2025" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
 
           <div>

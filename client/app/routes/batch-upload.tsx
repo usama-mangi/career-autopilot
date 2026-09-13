@@ -5,7 +5,7 @@ import MultiFileUploader, {
 } from "~/components/MultiFileUploader";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
-import { PageShell, PageHeader, Button, Input, Textarea, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Textarea, useToastHelpers, reportError } from "~/components/ui";
 
 interface ProcessingFile {
   name: string;
@@ -85,7 +85,7 @@ export default function BatchUpload() {
         p.error = err instanceof Error ? err.message : "Unknown error";
       });
       setProcessingProgress([...progress]);
-      toastError("Batch analysis failed", "Please try again");
+      reportError(err, { title: "Batch analysis failed", toastError });
     }
   }
 

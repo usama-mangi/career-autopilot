@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { cn } from "~/lib/utils";
-import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, Select, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, Select, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Interview Notes" },
@@ -144,7 +144,7 @@ export default function InterviewNotes() {
       setNotes(prev => prev.filter(n => n.id !== id));
       toastSuccess("Notes deleted");
     } catch (err) {
-      toastError("Delete failed", err instanceof Error ? err.message : "Unknown error");
+      reportError(err, { title: "Delete failed", toastError });
     }
   }
 
@@ -178,7 +178,7 @@ export default function InterviewNotes() {
         action={<Button onClick={() => { resetForm(); setShowForm(true); }}>+ New Notes</Button>}
       />
 
-      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+      {error && <ErrorBanner error={error} />}
 
       {notes.length === 0 && !loading ? (
         <Card className="text-center py-12">

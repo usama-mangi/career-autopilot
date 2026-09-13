@@ -1,0 +1,150 @@
+{
+  "project": {
+    "name": "Career Autopilot",
+    "description": "Full-stack AI career platform: job search, resume tailoring, application tracking, interview prep, offer negotiation."
+  },
+  "tasks": [
+    {
+      "id": "TASK-01",
+      "title": "Set up server test harness (Vitest) with mocked AI and JSearch boundaries and add the npm test script",
+      "status": "closed",
+      "dependencies": [],
+      "notes": "PoC for the hardening phase per docs/system-design.md step 6. Unit tests run offline, no docker, under 30s. Update AGENTS.md testing section when done."
+    },
+    {
+      "id": "TASK-02",
+      "title": "Write contract tests pinning DTO validation, userId scoping, and AI-failure-to-502 mapping",
+      "status": "closed",
+      "dependencies": [
+        "TASK-01"
+      ],
+      "notes": "Contract tests via supertest over a real Nest app (harness: src/test-helpers/contract-harness.ts) with main.ts ValidationPipe and guard override. Wired extension DTOs into the controller (no more any bodies/mass assignment), fixed unreachable GET /extension/applications/analytics (route order), added AI-failure-to-502 mapping in JobsService. Caught 3 real bugs."
+    },
+    {
+      "id": "TASK-03",
+      "title": "Delete dead code and repo noise: api.ts.bak, server.log, committed uploads; add a .gitignore rule for server/uploads",
+      "status": "closed",
+      "dependencies": [],
+      "notes": "Removed tracked client/app/lib/api.ts.bak and server/server.log via git rm; widened .gitignore (*.bak, *.log, /server/.env.* with !.env.example exception). server/uploads files were never tracked and are ignored - left untouched (user's real resume files). Also removed tracked server/.env.migrate (local DATABASE_URL only, no code references) from git but preserved on disk. Guard: server/src/repo-hygiene.spec.ts asserts no .bak/.log/.env files are tracked."
+    },
+    {
+      "id": "TASK-04",
+      "title": "Replace template README with a project README matching the audited stack (Node 20, npm, client/ layout)",
+      "status": "to-do",
+      "dependencies": [
+        "TASK-03"
+      ],
+      "notes": "Cover all three components, dev setup, env vars, and the verify commands from AGENTS.md."
+    },
+    {
+      "id": "TASK-05",
+      "title": "Scrub real API keys from server/.env.example and replace with placeholders",
+      "status": "closed",
+      "dependencies": [],
+      "notes": "Replaced real OPENAI_API_KEY (llm7.io) and JSEARCH_API_KEY (RapidAPI) in server/.env.example with obvious placeholders plus a copy-to-.env warning header. Guard: repo-hygiene.spec.ts shape-detects 32+ char credential-like values (verified against both leaked keys; placeholder words exempt) and fails CI if a real key returns."
+    },
+    {
+      "id": "TASK-06",
+      "title": "Add a root verification script (server tests + client typecheck) and run it as the definition of done for every task",
+      "status": "closed",
+      "dependencies": [
+        "TASK-01"
+      ],
+      "notes": "Added scripts/verify.mjs (sequential gates, live output, duration summary, non-zero exit on any failure) and a root package.json exposing it as npm run verify. Gates: server tests (vitest, offline), server build (nest build), client typecheck (react-router typegen + tsc), client build. Verified end to end: all four green in ~70s total."
+    },
+    {
+      "id": "TASK-07",
+      "title": "Introduce a typed error contract in services (NotFoundException, BadRequestException, 502 for upstream AI failures)",
+      "status": "closed",
+      "dependencies": [
+        "TASK-02"
+      ],
+      "notes": "Extracted withAiGateway/AiUnavailableException into src/common/ai-gateway.ts; applied to 21 hard-fail AI paths across linkedin, interview-prep, offer-negotiation, post-onboarding (+ interview-process); JobsService reuses the shared exception. 38 new tests incl. helper spec. Excluded: batches (best-effort + own retry), resumes (mixed best-effort design, needs own pass). 154 tests / 14 files, build clean."
+    },
+    {
+      "id": "TASK-08",
+      "title": "Add regression tests for the AI response parser (malformed JSON, truncated content, missing choices)",
+      "status": "closed",
+      "dependencies": [
+        "TASK-01"
+      ],
+      "notes": "13 new regression tests in ai.service.spec.ts (now 36 total): chat pinning of truncated finish_reason=length and refusal surfacing; ladder preference of pure JSON over fence-looking strings; first-of-multiple json fences; fence polluted by trailing prose rescued via brace rung; uppercase JSON fence; arrays and padded JSON; nested-object brace extraction; pinned known limitation (prose braces before JSON poison the greedy brace rung); trailing-comma JSON; mid-object truncation inside a fence; empty content with empty preview; downstream chat→getResponseText→parseAIResponse composite flows for length-truncation and missing choices. Suite 169 tests / build clean."
+    },
+    {
+      "id": "TASK-09",
+      "title": "Broaden unit test coverage: JobsService JSearch path, ResumesService parsing/scoring, DeadlinesService date logic, ExtensionService mapping",
+      "status": "closed",
+      "dependencies": [],
+      "notes": "Coverage breadth push complete: 93 offline tests across 6 spec files (~3s). Caught a real bug in ExtensionService.getApplicationAnalytics — second spread dropped the createdAt.gte bound when both date filters were set; fixed in the same change."
+    },
+    {
+      "id": "TASK-10",
+      "title": "Resumes service: wrap hard-fail AI paths in withAiGateway and fix embeddings leak in best-effort generateFromProfile",
+      "status": "closed",
+      "dependencies": [
+        "TASK-07"
+      ],
+      "notes": "Wrapped 7 hard-fail AI paths in withAiGateway: generateCoverLetter, analyzeSkillGap, generateInterviewQuestions, estimateSalary, suggestTemplates, compareMultipleJds, generateTailoredResume (the latter persists inside the wrapper so an AI failure creates no orphan resume). Best-effort paths preserved by design and pinned by tests: create() analysis, generateFromProfile generation + trailing feedback, tailored-resume trailing ATS pass. Two behavior fixes: (1) generateFromProfile embeddings call moved best-effort - an embeddings outage no longer 500s a path meant to survive AI failure, it falls back to unranked projects; (2) create() now actually stores the shaped fallbackFeedback on analysis failure instead of dead-code fallback + empty {}. 17 new tests pin 502+shared message+no-partial-write per hard-fail path, 404-without-AI, and all best-effort behaviors. Suite 186 tests, build clean."
+    }
+  ],
+  "log": {
+    "last_updated": "2026-09-13T07:38:23.796169+00:00",
+    "recent_changes": [
+      {
+        "action": "update",
+        "task": "TASK-10",
+        "old_status": "active",
+        "new_status": "closed",
+        "at": "2026-09-13T07:38:23.796149+00:00"
+      },
+      {
+        "action": "update",
+        "task": "TASK-10",
+        "old_status": "to-do",
+        "new_status": "active",
+        "at": "2026-09-13T07:32:28.880809+00:00"
+      },
+      {
+        "action": "add",
+        "task": "TASK-10",
+        "status": "to-do",
+        "at": "2026-09-13T07:32:09.995084+00:00"
+      },
+      {
+        "action": "update",
+        "task": "TASK-08",
+        "old_status": "active",
+        "new_status": "closed",
+        "at": "2026-09-13T07:23:25.668473+00:00"
+      },
+      {
+        "action": "update",
+        "task": "TASK-08",
+        "old_status": "to-do",
+        "new_status": "active",
+        "at": "2026-09-13T07:19:20.217424+00:00"
+      },
+      {
+        "action": "update",
+        "task": "TASK-06",
+        "old_status": "active",
+        "new_status": "closed",
+        "at": "2026-09-13T07:09:42.030923+00:00"
+      },
+      {
+        "action": "update",
+        "task": "TASK-06",
+        "old_status": "to-do",
+        "new_status": "active",
+        "at": "2026-09-13T07:06:56.831014+00:00"
+      },
+      {
+        "action": "update",
+        "task": "TASK-05",
+        "old_status": "active",
+        "new_status": "closed",
+        "at": "2026-09-13T06:55:58.174364+00:00"
+      }
+    ]
+  }
+}

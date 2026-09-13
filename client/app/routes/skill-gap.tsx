@@ -4,7 +4,7 @@ import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { cn } from "~/lib/utils";
 import type { Resume, SkillGapResult } from "types";
-import { PageShell, PageHeader, Button, Input, Textarea, Card, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Textarea, Card, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Skill Gap Analysis" },
@@ -36,6 +36,7 @@ export default function SkillGap() {
   const { data: session, isPending } = useSession();
   const isAuthenticated = !!session;
   const navigate = useNavigate();
+  const { error: toastError } = useToastHelpers();
 
   const [resume, setResume] = useState<Resume | null>(null);
   const [loadingResume, setLoadingResume] = useState(true);
@@ -76,7 +77,12 @@ export default function SkillGap() {
       const parsed = await api.resumes.skillGap(id, { jobDescription: jobDescription || undefined });
       setResult(parsed);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred");
+      reportError(err, {
+        title: "Analysis failed",
+        toastError,
+        setError,
+        retry: handleAnalyze,
+      });
     }
     setGenerating(false);
   }
@@ -133,9 +139,7 @@ export default function SkillGap() {
         </div>
       )}
 
-      {error && (
-        <div className="w-full max-w-4xl p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>
-      )}
+      {error && <ErrorBanner error={error} onRetry={handleAnalyze} className="w-full max-w-4xl" />}
 
       {result && !generating && (
         <div className="w-full max-w-4xl flex flex-col gap-6 animate-in fade-in duration-1000">

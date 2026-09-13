@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { cn } from "~/lib/utils";
+import { useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Manager Alignment Tool" },
@@ -13,6 +14,7 @@ export default function ManagerAlignment() {
   const { data: session, isPending } = useSession();
   const isAuthenticated = !!session;
   const navigate = useNavigate();
+  const { error: toastError } = useToastHelpers();
 
   const [alignments, setAlignments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,8 +49,8 @@ export default function ManagerAlignment() {
     setLoading(false);
   }
 
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleCreate(e?: React.FormEvent) {
+    e?.preventDefault();
     if (!formData.companyName || !formData.roleTitle) return;
     setSaving(true);
     setError("");
@@ -63,7 +65,12 @@ export default function ManagerAlignment() {
       setShowForm(false);
       resetForm();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to generate alignment");
+      reportError(err, {
+        title: "Generation failed",
+        toastError,
+        setError,
+        retry: handleCreate,
+      });
     }
     setSaving(false);
   }
@@ -94,7 +101,7 @@ export default function ManagerAlignment() {
           <button onClick={() => setShowForm(true)} className="primary-button">+ New Alignment</button>
         </div>
 
-        {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">{error}</div>}
+        {error && <ErrorBanner error={error} onRetry={handleCreate} className="mb-6" />}
 
         {loading ? (
           <div className="text-center py-12 text-gray-500">Loading...</div>

@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { cn } from "~/lib/utils";
-import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | 30-60-90 Day Plan Builder" },
@@ -68,8 +68,8 @@ export default function First90Days() {
     setLoading(false);
   }
 
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleCreate(e?: React.FormEvent) {
+    e?.preventDefault();
     if (!formData.companyName || !formData.roleTitle) return;
     setSaving(true);
     setError("");
@@ -84,8 +84,12 @@ export default function First90Days() {
       setFormData({ companyName: "", roleTitle: "", jobDescription: "", startDate: "" });
       toastSuccess("Plan created", "Your 90-day plan has been generated");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create plan");
-      toastError("Creation failed", err instanceof Error ? err.message : "Please try again");
+      reportError(err, {
+        title: "Creation failed",
+        toastError,
+        setError,
+        retry: handleCreate,
+      });
     }
     setSaving(false);
   }
@@ -97,7 +101,7 @@ export default function First90Days() {
       setTrackers(prev => prev.map(t => t.id === id ? updated : t));
       if (expandedId === id) setExpandedId(null);
     } catch (err) {
-      toastError("Update failed", err instanceof Error ? err.message : "Please try again");
+      reportError(err, { title: "Update failed", toastError });
     }
     setUpdating(false);
   }
@@ -110,7 +114,7 @@ export default function First90Days() {
       if (expandedId === id) setExpandedId(null);
       toastSuccess("Plan deleted");
     } catch (err) {
-      toastError("Delete failed", err instanceof Error ? err.message : "Unknown error");
+      reportError(err, { title: "Delete failed", toastError });
     }
   }
 
@@ -138,7 +142,7 @@ export default function First90Days() {
         action={<Button onClick={() => { resetForm(); setShowForm(true); }}>+ New Plan</Button>}
       />
 
-      {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+      {error && <ErrorBanner error={error} onRetry={handleCreate} />}
 
       {trackers.length === 0 ? (
         <Card className="text-center py-12">
@@ -288,7 +292,7 @@ export default function First90Days() {
         size="lg"
       >
         <form onSubmit={handleCreate} className="space-y-4">
-          {error && <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+          {error && <ErrorBanner error={error} />}
           <Input
             label="Company Name"
             placeholder="e.g. Google"

@@ -3,7 +3,7 @@ import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
-import { PageShell, PageHeader, Button, Input, Select, Card, useToastHelpers } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Select, Card, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Equity & RSU Calculator" },
@@ -37,8 +37,8 @@ export default function EquityCalculator() {
     return null;
   }
 
-  async function handleCalculate(e: FormEvent) {
-    e.preventDefault();
+  async function handleCalculate(e?: FormEvent) {
+    e?.preventDefault();
     if (!formData.roleTitle || !formData.totalShares || !formData.sharePrice || !formData.currentSalary) return;
     setSaving(true);
     setError("");
@@ -49,8 +49,12 @@ export default function EquityCalculator() {
       setResult(data);
       toastSuccess("Calculation complete", "Equity analysis ready");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to calculate");
-      toastError("Calculation failed", err instanceof Error ? err.message : "Please try again");
+      reportError(err, {
+        title: "Calculation failed",
+        toastError,
+        setError,
+        retry: handleCalculate,
+      });
     }
     setSaving(false);
   }
@@ -66,7 +70,7 @@ export default function EquityCalculator() {
         subtitle="Calculate equity value with vesting schedules and tax implications"
       />
 
-      {error && <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">{error}</div>}
+      {error && <ErrorBanner error={error} onRetry={handleCalculate} />}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Form */}

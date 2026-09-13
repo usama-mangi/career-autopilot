@@ -4,7 +4,7 @@ import { useNavigate } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { cn } from "~/lib/utils";
-import { PageShell, PageHeader, Button, Input, Textarea, Card, useToastHelpers, ScoreBadge } from "~/components/ui";
+import { PageShell, PageHeader, Button, Input, Textarea, Card, useToastHelpers, ScoreBadge, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
   { title: "Career Autopilot | Behavioral Question Bank" },
@@ -81,8 +81,12 @@ export default function BehavioralBank() {
       setResult(data);
       toastSuccess("Questions generated", "Your behavioral question bank is ready");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred");
-      toastError("Generation failed", err instanceof Error ? err.message : "Please try again");
+      reportError(err, {
+        title: "Generation failed",
+        toastError,
+        setError,
+        retry: handleGenerate,
+      });
     }
     setGenerating(false);
   }
@@ -103,7 +107,7 @@ export default function BehavioralBank() {
           setBanks((prev) => prev.filter((b) => b.id !== id));
           toastSuccess("Deleted");
     } catch (err) {
-      toastError("Delete failed", err instanceof Error ? err.message : "Unknown error");
+      reportError(err, { title: "Delete failed", toastError });
     }
   }
 
@@ -155,11 +159,7 @@ export default function BehavioralBank() {
         }
       />
 
-      {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm" role="alert">
-          {error}
-        </div>
-      )}
+      {error && <ErrorBanner error={error} onRetry={handleGenerate} />}
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Sidebar - Saved Banks */}
