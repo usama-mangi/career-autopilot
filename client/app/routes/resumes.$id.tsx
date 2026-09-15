@@ -331,8 +331,8 @@ export default function Resume() {
                 </span>
               )}
               {isAiGenerated && (
-                <span className="shrink-0 px-2 py-0.5 text-xs font-medium bg-purple-50 text-purple-700 rounded-full ring-1 ring-purple-200">
-                  AI Generated
+                <span className="shrink-0 px-2 py-0.5 text-xs font-medium bg-[#F5EDE4] text-gray-600 rounded-full ring-1 ring-[#E8DDD1]">
+                  AI generated
                 </span>
               )}
             </p>

@@ -5,17 +5,20 @@ import { api } from "~/lib/api";
 import { cn } from "~/lib/utils";
 import type { Resume, InterviewQuestionsResult, InterviewQuestion } from "types";
 import { PageShell, PageHeader, Button, Input, Textarea, Card, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
+import { ChatIcon, CogIcon, TargetIcon, BulbIcon, ClipboardIcon, BookIcon } from "~/components/ui/icons";
 
 export const meta = () => [
   { title: "Career Autopilot | Interview Questions" },
   { name: "description", content: "Generate realistic interview questions tailored to your resume" },
 ];
 
+// Category color comes from the status palette (info/warning/neutral), not
+// from ad-hoc purple/teal. Icons are SVG glyphs next to visible labels.
 const categoryConfig = {
-  behavioral: { label: "Behavioral", class: "bg-purple-100 text-purple-700 border-purple-200", icon: "💬" },
-  technical: { label: "Technical", class: "bg-blue-100 text-blue-700 border-blue-200", icon: "⚙️" },
-  "role-specific": { label: "Role-Specific", class: "bg-orange-100 text-orange-700 border-orange-200", icon: "🎯" },
-  situational: { label: "Situational", class: "bg-teal-100 text-teal-700 border-teal-200", icon: "🧠" },
+  behavioral: { label: "Behavioral", class: "bg-info-50 text-info-700 border-info-100", icon: ChatIcon },
+  technical: { label: "Technical", class: "bg-[#F5EDE4] text-gray-700 border-[#E8DDD1]", icon: CogIcon },
+  "role-specific": { label: "Role-Specific", class: "bg-primary-50 text-primary-600 border-primary-100", icon: TargetIcon },
+  situational: { label: "Situational", class: "bg-warning-50 text-warning-700 border-warning-100", icon: BulbIcon },
 };
 
 const difficultyConfig = {
@@ -170,7 +173,7 @@ export default function InterviewQuestions() {
 
       {generating && (
         <div className="flex flex-col items-center gap-6 mt-8">
-          <img src="/images/resume-scan.gif" className="w-64" />
+          <img src="/images/resume-scan.gif" className="w-64" alt="" aria-hidden="true" />
           <p className="text-sm text-gray-500 animate-pulse">Analyzing your resume and crafting realistic interview questions...</p>
         </div>
       )}
@@ -199,9 +202,12 @@ export default function InterviewQuestions() {
           {Object.entries(groupedQuestions).map(([cat, questions]) => (
             <div key={cat} className="flex flex-col gap-3">
               <div className="flex flex-row items-center gap-2">
-                <span className="text-lg">{categoryConfig[cat as keyof typeof categoryConfig].icon}</span>
+                {(() => {
+                  const GroupIcon = categoryConfig[cat as keyof typeof categoryConfig].icon;
+                  return <GroupIcon className="size-5 text-gray-500" />;
+                })()}
                 <h3 className="text-xl font-semibold text-gray-900">{categoryConfig[cat as keyof typeof categoryConfig].label}</h3>
-                <span className="text-sm text-gray-400 ml-auto">{questions.length} question{questions.length > 1 ? "s" : ""}</span>
+                <span className="text-sm text-gray-500 ml-auto">{questions.length} question{questions.length > 1 ? "s" : ""}</span>
               </div>
               {questions.map((q, i) => {
                 const globalIndex = result.questions.indexOf(q);
@@ -222,15 +228,15 @@ export default function InterviewQuestions() {
                     {isExpanded && (
                       <div className="px-5 pb-5 pt-0 border-t border-gray-100">
                         <div className="mt-4">
-                          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">💡 Talking Points</h4>
+                          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Talking points</h4>
                           <ul className="space-y-1.5">
                             {q.talkingPoints.map((point, j) => (
-                              <li key={j} className="text-sm text-gray-700 flex items-start gap-2"><span className="text-blue-500 mt-0.5 flex-shrink-0">•</span>{point}</li>
+                              <li key={j} className="text-sm text-gray-700 flex items-start gap-2"><span className="text-info mt-0.5 flex-shrink-0" aria-hidden="true">•</span>{point}</li>
                             ))}
                           </ul>
                         </div>
                         <div className="mt-4">
-                          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">🔍 What the Interviewer Is Looking For</h4>
+                          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">What the interviewer is looking for</h4>
                           <p className="text-sm text-gray-700 leading-relaxed">{q.whatInterviewerLooksFor}</p>
                         </div>
                       </div>
@@ -242,11 +248,11 @@ export default function InterviewQuestions() {
           ))}
           {result.preparationTips.length > 0 && (
             <Card>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">📋 Preparation Tips</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Preparation tips</h3>
               <ul className="space-y-3">
                 {result.preparationTips.map((tip, i) => (
                   <li key={i} className="flex items-start gap-3 text-sm text-gray-700">
-                    <span className="flex-shrink-0 size-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xs font-semibold">{i + 1}</span>
+                    <span className="flex-shrink-0 size-6 rounded-full bg-info-50 text-info flex items-center justify-center text-xs font-semibold">{i + 1}</span>
                     {tip}
                   </li>
                 ))}
@@ -255,7 +261,7 @@ export default function InterviewQuestions() {
           )}
           {result.keyTopicsToReview.length > 0 && (
             <Card>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">📚 Key Topics to Review</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Key topics to review</h3>
               <div className="flex flex-wrap gap-2">
                 {result.keyTopicsToReview.map((topic, i) => (
                   <span key={i} className="px-3 py-1.5 bg-gray-50 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium">{topic}</span>

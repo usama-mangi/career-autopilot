@@ -57,30 +57,39 @@ export default function App() {
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
-  let message = "Oops!";
+  let message = "Something went wrong";
   let details = "An unexpected error occurred.";
   let stack: string | undefined;
 
   if (isRouteErrorResponse(error)) {
-    message = error.status === 404 ? "404" : "Error";
-    details =
-      error.status === 404
-        ? "The requested page could not be found."
-        : error.statusText || details;
+    if (error.status === 404) {
+      message = "Page not found";
+      details = "There is no page at this address. Check the link or go back to the dashboard.";
+    } else {
+      details = error.statusText || details;
+    }
   } else if (import.meta.env.DEV && error && error instanceof Error) {
     details = error.message;
     stack = error.stack;
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="max-w-md bg-white rounded-xl border border-gray-200 shadow-sm p-8 text-center">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">{message}</h1>
-        <p className="text-gray-500 mb-6">{details}</p>
+    <main className="min-h-screen bg-[#FFFBF5] flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white rounded-xl border border-[#E8DDD1] shadow-sm p-8 text-center">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">{message}</h1>
+        <p className="text-sm text-gray-500 mb-6">{details}</p>
+        <div className="flex gap-3 justify-center">
+          <a
+            href="/dashboard"
+            className="inline-flex items-center justify-center rounded-lg bg-primary-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-600 transition-colors"
+          >
+            Go to dashboard
+          </a>
+        </div>
         {stack && (
-          <details className="w-full text-left">
-            <summary className="cursor-pointer text-sm text-gray-500 mb-2">Error Details</summary>
-            <pre className="w-full p-4 overflow-x-auto text-left text-xs bg-gray-50 rounded-lg">
+          <details className="w-full text-left mt-6">
+            <summary className="cursor-pointer text-sm text-gray-500 mb-2">Error details</summary>
+            <pre className="w-full p-4 overflow-x-auto text-left text-xs bg-[#F5EDE4] rounded-lg">
               <code>{stack}</code>
             </pre>
           </details>

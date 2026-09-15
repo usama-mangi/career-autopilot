@@ -36,12 +36,15 @@ export function Modal({
   const modalRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<HTMLElement | null>(null);
 
-  // Focus management
+  const FOCUSABLE =
+    'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+  // Focus management: trap Tab inside the dialog while open, restore focus
+  // to the trigger on close.
   useEffect(() => {
     if (isOpen) {
       previousActiveElement.current = document.activeElement as HTMLElement;
       document.body.style.overflow = "hidden";
-      // Focus the modal after render
       setTimeout(() => modalRef.current?.focus(), 0);
     } else {
       document.body.style.overflow = "";
@@ -52,14 +55,35 @@ export function Modal({
     };
   }, [isOpen]);
 
+  function handleTrapFocus(event: KeyboardEvent) {
+    if (event.key !== "Tab" || !modalRef.current) return;
+    const focusable = Array.from(
+      modalRef.current.querySelectorAll<HTMLElement>(FOCUSABLE),
+    ).filter((el) => el.offsetParent !== null);
+    if (focusable.length === 0) return;
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement;
+
+    if (event.shiftKey && (active === first || active === modalRef.current)) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
   // Escape key handler
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
-      if (!isOpen || !closeOnEscape) return;
-      if (event.key === "Escape") {
+      if (!isOpen) return;
+      if (event.key === "Escape" && closeOnEscape) {
         event.preventDefault();
         onClose();
       }
+      handleTrapFocus(event);
     }
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);

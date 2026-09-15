@@ -5,6 +5,7 @@ import { api } from "~/lib/api";
 import { cn } from "~/lib/utils";
 import type { Resume, MultiJdResult } from "types";
 import { PageShell, PageHeader, Button, Input, Textarea, ScoreBadge, ScoreCell, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
+import { TrophyIcon } from "~/components/ui/icons";
 
 export const meta = () => [
   { title: "Career Autopilot | Multi-JD Comparison" },
@@ -204,7 +205,7 @@ export default function MultiJd() {
 
           <button
             onClick={addJobEntry}
-            className="text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors cursor-pointer py-2"
+            className="text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors cursor-pointer py-2"
           >
             + Add Another Job
           </button>
@@ -219,7 +220,7 @@ export default function MultiJd() {
 
       {generating && (
         <div className="flex flex-col items-center gap-6 mt-8">
-          <img src="/images/resume-scan.gif" className="w-64" />
+          <img src="/images/resume-scan.gif" className="w-64" alt="" aria-hidden="true" />
           <p className="text-sm text-gray-500 animate-pulse">
             Evaluating your resume against each job description...
           </p>
@@ -241,10 +242,10 @@ export default function MultiJd() {
           </div>
 
           {/* Best Match Banner */}
-          <div className="bg-gradient-to-r from-[#FFF8F0] to-[#FFFBF5] rounded-2xl p-6 border border-[#E8DDD1]">
+          <div className="bg-[#FFF8F0] rounded-2xl p-6 border border-[#E8DDD1]">
             <div className="flex items-start gap-4">
-              <div className="size-12 rounded-full bg-primary-50 border border-primary-100 flex items-center justify-center flex-shrink-0">
-                <span className="text-2xl">🏆</span>
+              <div className="size-12 rounded-full bg-primary-50 border border-primary-100 flex items-center justify-center flex-shrink-0 text-primary-600">
+                <TrophyIcon className="size-6" />
               </div>
               <div>
                 <h3 className="text-lg font-bold text-gray-900">Best Match: {result.bestMatch}</h3>

@@ -10,21 +10,23 @@ export const meta = () => [
   { name: "description", content: "Structured interview notes with questions, answers, and ratings" },
 ];
 
+// Labels carry the meaning; icons stay out of the option lists so native
+// selects and tests read clean text.
 const TYPE_OPTIONS = [
-  { value: "phone_screen", label: "📞 Phone Screen" },
-  { value: "technical", label: "⚙️ Technical" },
-  { value: "behavioral", label: "💬 Behavioral" },
-  { value: "panel", label: "👥 Panel" },
-  { value: "onsite", label: "🏢 On-site" },
-  { value: "virtual", label: "💻 Virtual" },
+  { value: "phone_screen", label: "Phone Screen" },
+  { value: "technical", label: "Technical" },
+  { value: "behavioral", label: "Behavioral" },
+  { value: "panel", label: "Panel" },
+  { value: "onsite", label: "On-site" },
+  { value: "virtual", label: "Virtual" },
   { value: "other", label: "Other" },
 ];
 
 const EMAIL_TYPE_OPTIONS = [
-  { value: "thank_you", label: "🙏 Thank You" },
-  { value: "check_in", label: "👋 Check-in" },
-  { value: "additional_materials", label: "📎 Additional Materials" },
-  { value: "custom", label: "✉️ Custom" },
+  { value: "thank_you", label: "Thank You" },
+  { value: "check_in", label: "Check-in" },
+  { value: "additional_materials", label: "Additional Materials" },
+  { value: "custom", label: "Custom" },
 ];
 
 import { suggestFollowUp } from "~/lib/follow-up";
@@ -477,7 +479,7 @@ export default function InterviewNotes() {
                           className="px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-full text-xs hover:bg-amber-100 transition"
                           title="Generate a follow-up email for this item"
                         >
-                          ✉️ {item}
+                          {item}
                         </button>
                       ))}
                     </div>
@@ -517,7 +519,7 @@ export default function InterviewNotes() {
                       onClick={() => openDraftEmail(note, note.followUpItems[0] || "this interview")}
                       className="text-xs text-primary-600 hover:underline"
                     >
-                      ✉️ Generate follow-up email
+                      Generate follow-up email
                     </button>
                   )}
                 </div>

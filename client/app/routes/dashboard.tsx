@@ -113,7 +113,7 @@ export default function Dashboard() {
         id: `accepted-${app.id}`,
         kind: "closed-loop",
         urgency: "now",
-        title: `You accepted ${app.roleTitle} at ${app.companyName} 🎉`,
+        title: `You accepted ${app.roleTitle} at ${app.companyName}`,
         detail: "Turn the offer into a 30-60-90 day plan so day one goes well.",
         to: `/onboarding/first-90-days?applicationId=${app.id}&company=${encodeURIComponent(app.companyName)}&role=${encodeURIComponent(app.roleTitle)}`,
         cta: "Plan first 90 days",

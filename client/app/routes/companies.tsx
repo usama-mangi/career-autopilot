@@ -12,10 +12,10 @@ export const meta = () => [
 ];
 
 const SOURCES = [
-  { value: "linkedin", label: "LinkedIn", color: "bg-blue-100 text-blue-600" },
-  { value: "indeed", label: "Indeed", color: "bg-indigo-100 text-indigo-600" },
-  { value: "glassdoor", label: "Glassdoor", color: "bg-green-100 text-green-600" },
-  { value: "jsearch", label: "JSearch", color: "bg-purple-100 text-purple-600" },
+  { value: "linkedin", label: "LinkedIn", color: "bg-info-50 text-info" },
+  { value: "indeed", label: "Indeed", color: "bg-info-50 text-info-700" },
+  { value: "glassdoor", label: "Glassdoor", color: "bg-success-50 text-success-700" },
+  { value: "jsearch", label: "JSearch", color: "bg-warning-50 text-warning-700" },
   { value: "company", label: "Company Site", color: "bg-gray-100 text-gray-600" },
 ];
 

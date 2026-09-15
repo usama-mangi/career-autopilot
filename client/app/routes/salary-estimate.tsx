@@ -18,9 +18,9 @@ const confidenceConfig = {
 };
 
 const marketLevelConfig = {
-  "below-market": { label: "Below Market", class: "bg-orange-100 text-orange-700" },
-  market: { label: "At Market Rate", class: "bg-green-100 text-green-700" },
-  "above-market": { label: "Above Market", class: "bg-blue-100 text-blue-700" },
+  "below-market": { label: "Below Market", class: "bg-warning-50 text-warning-700" },
+  market: { label: "At Market Rate", class: "bg-success-50 text-success-700" },
+  "above-market": { label: "Above Market", class: "bg-info-50 text-info-700" },
 };
 
 function formatCurrency(value: number, symbol: string) {
@@ -154,7 +154,7 @@ export default function SalaryEstimate() {
 
       {generating && (
         <div className="flex flex-col items-center gap-6 mt-8">
-          <img src="/images/resume-scan.gif" className="w-64" />
+          <img src="/images/resume-scan.gif" className="w-64" alt="" aria-hidden="true" />
           <p className="text-sm text-gray-500 animate-pulse">Analyzing market data and your profile...</p>
         </div>
       )}

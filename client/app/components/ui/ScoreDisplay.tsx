@@ -139,19 +139,20 @@ export interface ScoreBarProps {
 export function ScoreBar({ score, height = 6, showScore = true, className }: ScoreBarProps) {
   const config = getScoreConfig(score);
 
-  const gradientStyles: Record<string, string> = {
-    green: "bg-gradient-to-r from-green-500 to-emerald-500",
-    yellow: "bg-gradient-to-r from-yellow-500 to-amber-500",
-    red: "bg-gradient-to-r from-red-500 to-yellow-500",
+  // Flat semantic fills. A score is a number; the bar only echoes it.
+  const fillStyles: Record<string, string> = {
+    green: "bg-[#16a34a]",
+    yellow: "bg-[#d97706]",
+    red: "bg-[#dc2626]",
   };
 
-  const color = config.color as keyof typeof gradientStyles;
+  const color = config.color as keyof typeof fillStyles;
 
   return (
     <div className={cn("w-full", className)}>
       <div className="flex items-center justify-between mb-1" aria-hidden="true">
         {showScore && (
-          <span className={cn("text-xs font-semibold", config.color === "green" && "text-green-600", config.color === "yellow" && "text-yellow-600", config.color === "red" && "text-red-600")}>
+          <span className={cn("text-xs font-semibold", config.color === "green" && "text-[#15803d]", config.color === "yellow" && "text-[#b45309]", config.color === "red" && "text-[#b91c1c]")}>
             {score}/100
           </span>
         )}
@@ -160,7 +161,7 @@ export function ScoreBar({ score, height = 6, showScore = true, className }: Sco
         <div
           className={cn(
             "h-full rounded-full transition-all duration-700 ease-out",
-            gradientStyles[config.color],
+            fillStyles[config.color],
           )}
           style={{ width: `${score}%` }}
         />

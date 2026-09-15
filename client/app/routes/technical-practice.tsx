@@ -220,7 +220,7 @@ export default function TechnicalPractice() {
             </Card>
           ) : generating ? (
             <Card className="text-center py-12">
-              <img src="/images/resume-scan.gif" className="w-64 mx-auto" alt="Processing" />
+              <img src="/images/resume-scan.gif" className="w-64 mx-auto" alt="" aria-hidden="true" />
               <p className="mt-4 text-sm text-gray-500 animate-pulse">Generating coding challenges, system design prompts, and take-home simulations...</p>
             </Card>
           ) : result && (

@@ -7,8 +7,7 @@ import { PageShell, PageHeader, Button, Input, Textarea, Select, Card, Modal, Mo
 import NegotiationStrategyView from "~/components/NegotiationStrategyView";
 
 export const meta = () => [
-  { title: "Career Autopilot | Salary Negotiation Coach" },
-  { name: "description", content: "AI-powered salary negotiation strategy with scripts and email templates" },
+  { title: "Career Autopilot | Salary Negotiation Coach" },   { name: "description", content: "Salary negotiation strategy with scripts and email templates" },
 ];
 
 export default function SalaryNegotiation() {
@@ -189,7 +188,7 @@ export default function SalaryNegotiation() {
     <PageShell maxWidth="2xl">
       <PageHeader
         title="Salary Negotiation Coach"
-        subtitle="AI-powered negotiation strategy with scripts and email templates"
+        subtitle="Negotiation strategy with scripts and email templates"
         action={<Button onClick={() => { resetForm(); setShowForm(true); }}>+ New Strategy</Button>}
       />
 

@@ -209,7 +209,7 @@ export default function PanelInterview() {
                           {interviewersList.map((int: any, i: number) => (
                             <div key={i} className="bg-white rounded-lg p-3 border border-gray-200">
                               <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm font-bold">
+                                <div className="w-8 h-8 rounded-full bg-info-50 text-info-700 flex items-center justify-center text-sm font-bold">
                                   {int.name.charAt(0).toUpperCase()}
                                 </div>
                                 <div>
@@ -226,7 +226,7 @@ export default function PanelInterview() {
                         <h4 className="font-medium text-gray-700 mb-2">Details</h4>
                         <dl className="space-y-1 text-sm">
                           {panel.location && <div><dt className="text-gray-500">Location:</dt><dd className="text-gray-900">{panel.location}</dd></div>}
-                          {panel.meetingLink && <div><dt className="text-gray-500">Meeting Link:</dt><dd className="text-indigo-600"><a href={panel.meetingLink} target="_blank" rel="noopener noreferrer" className="hover:underline">{panel.meetingLink}</a></dd></div>}
+                          {panel.meetingLink && <div><dt className="text-gray-500">Meeting Link:</dt><dd className="text-primary-600"><a href={panel.meetingLink} target="_blank" rel="noopener noreferrer" className="hover:underline">{panel.meetingLink}</a></dd></div>}
                           {panel.notes && <div><dt className="text-gray-500">Notes:</dt><dd className="text-gray-900 whitespace-pre-wrap">{panel.notes}</dd></div>}
                         </dl>
                       </div>

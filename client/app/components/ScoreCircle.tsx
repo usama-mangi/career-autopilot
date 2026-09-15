@@ -1,8 +1,10 @@
-function getScoreGradient(score: number) {
-  if (score >= 90) return { from: "#2563eb", to: "#7c3aed", className: "score-gradient-excellent" };
-  if (score >= 70) return { from: "#22c55e", to: "#10b981", className: "score-gradient-high" };
-  if (score >= 40) return { from: "#f59e06", to: "#eab308", className: "score-gradient-mid" };
-  return { from: "#dc2626", to: "#f59e0b", className: "score-gradient-low" };
+/* Flat semantic fills from the token set. No gradients: the score number
+   carries the meaning, the ring only echoes it. */
+function getScoreFill(score: number) {
+  if (score >= 90) return "#1E5F8C";
+  if (score >= 70) return "#16a34a";
+  if (score >= 40) return "#d97706";
+  return "#dc2626";
 }
 
 function ScoreCircle({ score = 75, size = 100 }: { score: number; size?: number }) {
@@ -12,8 +14,7 @@ function ScoreCircle({ score = 75, size = 100 }: { score: number; size?: number 
   const circumference = 2 * Math.PI * normalizedRadius;
   const progress = score / 100;
   const strokeDashoffset = circumference * (1 - progress);
-  const gradient = getScoreGradient(score);
-  const gradientId = `score-grad-${size}`;
+  const fill = getScoreFill(score);
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
@@ -22,26 +23,21 @@ function ScoreCircle({ score = 75, size = 100 }: { score: number; size?: number 
         width="100%"
         viewBox="0 0 100 100"
         className="transform -rotate-90"
+        aria-hidden="true"
       >
         <circle
           cx="50"
           cy="50"
           r={normalizedRadius}
-          stroke="#e5e7eb"
+          stroke="#E8DDD1"
           strokeWidth={stroke}
           fill="transparent"
         />
-        <defs>
-          <linearGradient id={gradientId} x1="1" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={gradient.from} />
-            <stop offset="100%" stopColor={gradient.to} />
-          </linearGradient>
-        </defs>
         <circle
           cx="50"
           cy="50"
           r={normalizedRadius}
-          stroke={`url(#${gradientId})`}
+          stroke={fill}
           strokeWidth={stroke}
           fill="transparent"
           strokeDasharray={circumference}
@@ -53,10 +49,10 @@ function ScoreCircle({ score = 75, size = 100 }: { score: number; size?: number 
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="font-bold text-gray-900" style={{ fontSize: size * 0.2 }}>
+        <span className="font-bold text-gray-900" style={{ fontSize: size * 0.2 }} role="img" aria-label={`Score: ${score} out of 100`}>
           {score}
         </span>
-        <span className="text-gray-400" style={{ fontSize: size * 0.1 }}>
+        <span className="text-gray-500" style={{ fontSize: size * 0.1 }}>
           /100
         </span>
       </div>

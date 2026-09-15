@@ -99,7 +99,7 @@ export default function MultiFileUploader({
 
   return (
     <div className="w-full flex flex-col gap-4">
-      <div className="gradient-border">
+      <div className="panel-soft">
         <div {...getRootProps()}>
           <input {...getInputProps()} />
           <div className="space-y-4 cursor-pointer p-8">

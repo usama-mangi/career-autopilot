@@ -29,11 +29,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       outline: "bg-transparent text-gray-700 border border-[#E8DDD1] hover:bg-[#FFFBF5] hover:border-[#9C8E7E] focus:ring-gray-500/30",
     };
 
+    // sm keeps a compact footprint for dense desktop controls; icon is a full
+    // 44px touch target. Never make sm the only path to a mobile action.
     const sizes = {
-      sm: "px-3 py-1.5 text-xs gap-1.5",
-      md: "px-4 py-2 text-sm gap-2",
+      sm: "px-3 py-2.5 text-xs gap-1.5 sm:py-1.5",
+      md: "px-4 py-2.5 text-sm gap-2 sm:py-2",
       lg: "px-6 py-3 text-base gap-2",
-      icon: "p-2",
+      icon: "p-2.5 min-w-[44px] min-h-[44px]",
     };
 
     const isDisabled = disabled || loading;

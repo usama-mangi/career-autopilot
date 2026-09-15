@@ -70,7 +70,7 @@ export function NegotiationStrategyView({ coach }: { coach: NegotiationCoach }) 
                 <ul className="space-y-1">
                   {strategy.keyLeveragePoints.map((lp: string, i: number) => (
                     <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
-                      <span className="text-indigo-500 mt-0.5">•</span> {lp}
+                      <span className="text-primary-600 mt-0.5" aria-hidden="true">•</span> {lp}
                     </li>
                   ))}
                 </ul>
@@ -82,7 +82,7 @@ export function NegotiationStrategyView({ coach }: { coach: NegotiationCoach }) 
                 <div className="space-y-2">
                   {strategy.stepByStep.map((step, i) => (
                     <div key={step.step ?? i} className="flex gap-3 items-start">
-                      <span className="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-0.5 rounded-full mt-0.5">{step.step}</span>
+                      <span className="bg-primary-50 text-primary-600 text-xs font-bold px-2 py-0.5 rounded-full mt-0.5">{step.step}</span>
                       <div className="flex-1">
                         <p className="text-sm font-medium text-gray-800">{step.action}</p>
                         {step.script && <p className="text-xs text-gray-500 mt-1 italic">"{step.script}"</p>}
@@ -105,7 +105,7 @@ export function NegotiationStrategyView({ coach }: { coach: NegotiationCoach }) 
               <Card key={i} padding="md">
                 <div className="flex items-center gap-2 mb-2">
                   {tpl.type && (
-                    <span className="bg-indigo-100 text-indigo-700 text-xs font-medium px-2 py-0.5 rounded-full capitalize">
+                    <span className="bg-primary-50 text-primary-600 text-xs font-medium px-2 py-0.5 rounded-full capitalize">
                       {tpl.type.replace(/_/g, " ")}
                     </span>
                   )}

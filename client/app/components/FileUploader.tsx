@@ -93,7 +93,7 @@ export default function FileUploader({
   }
 
   return (
-    <div className="w-full gradient-border">
+    <div className="w-full panel-soft">
       <div {...getRootProps()}>
         <input {...getInputProps()} />
 

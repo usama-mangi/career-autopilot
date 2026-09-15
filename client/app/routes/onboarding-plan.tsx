@@ -12,9 +12,9 @@ export const meta = () => [
 
 function getPhaseColor(phase: string) {
   switch (phase) {
-    case "30": return "bg-blue-100 text-blue-700";
-    case "60": return "bg-purple-100 text-purple-700";
-    case "90": return "bg-green-100 text-green-700";
+    case "30": return "bg-info-50 text-info-700";
+    case "60": return "bg-warning-50 text-warning-700";
+    case "90": return "bg-success-50 text-success-700";
     default: return "bg-gray-100 text-gray-700";
   }
 }

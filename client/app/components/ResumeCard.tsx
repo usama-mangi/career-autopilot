@@ -13,7 +13,7 @@ const STATUS_CONFIG: Record<
   not_applied: { label: "Not Applied", color: "text-gray-600", bgColor: "bg-gray-100" },
   draft: { label: "Draft", color: "text-gray-600", bgColor: "bg-gray-100" },
   applied: { label: "Applied", color: "text-primary-600", bgColor: "bg-primary-50" },
-  phone_screen: { label: "Phone Screen", color: "text-purple-600", bgColor: "bg-purple-50" },
+  phone_screen: { label: "Phone Screen", color: "text-info", bgColor: "bg-info-50" },
   interviewing: { label: "Interviewing", color: "text-warning", bgColor: "bg-warning-light" },
   offer: { label: "Offer", color: "text-success", bgColor: "bg-success-light" },
   rejected: { label: "Rejected", color: "text-danger", bgColor: "bg-danger-light" },
@@ -94,9 +94,9 @@ const FORMAT_BADGE_COLORS: Record<string, string> = {
   pdf: "bg-badge-green text-badge-green-text",
   docx: "bg-badge-blue text-badge-blue-text",
   txt: "bg-badge-yellow text-badge-yellow-text",
-  html: "bg-badge-purple text-badge-purple-text",
+  html: "bg-badge-neutral text-badge-neutral-text",
   linkedin: "bg-badge-blue text-badge-blue-text",
-  generated: "bg-purple-100 text-purple-700",
+  generated: "bg-badge-neutral text-badge-neutral-text",
 };
 
 const FORMAT_LABELS: Record<string, string> = {

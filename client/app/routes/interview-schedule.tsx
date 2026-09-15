@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, Select, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
+import { cn } from "~/lib/utils";
 
 export const meta = () => [
   { title: "Career Autopilot | Interview Schedule" },
@@ -17,14 +18,14 @@ const STATUS_CONFIG = {
 };
 
 const TYPE_CONFIG = {
-  phone: { label: "Phone Screen", icon: "📞", color: "bg-blue-100 text-blue-700" },
-  video: { label: "Video Interview", icon: "💻", color: "bg-purple-100 text-purple-700" },
-  onsite: { label: "On-site", icon: "🏢", color: "bg-green-100 text-green-700" },
-  technical: { label: "Technical", icon: "⚙️", color: "bg-orange-100 text-orange-700" },
-  behavioral: { label: "Behavioral", icon: "💬", color: "bg-pink-100 text-pink-700" },
-  case_study: { label: "Case Study", icon: "📊", color: "bg-teal-100 text-teal-700" },
-  panel: { label: "Panel", icon: "👥", color: "bg-indigo-100 text-indigo-700" },
-  final: { label: "Final Round", icon: "🎯", color: "bg-red-100 text-red-700" },
+  phone: { label: "Phone Screen", color: "bg-info-50 text-info-700" },
+  video: { label: "Video Interview", color: "bg-warning-50 text-warning-700" },
+  onsite: { label: "On-site", color: "bg-success-50 text-success-700" },
+  technical: { label: "Technical", color: "bg-primary-50 text-primary-600" },
+  behavioral: { label: "Behavioral", color: "bg-info-50 text-info-700" },
+  case_study: { label: "Case Study", color: "bg-warning-50 text-warning-700" },
+  panel: { label: "Panel", color: "bg-info-50 text-info-700" },
+  final: { label: "Final Round", color: "bg-danger-50 text-danger-700" },
 };
 
 export default function InterviewSchedule() {
@@ -231,7 +232,7 @@ export default function InterviewSchedule() {
                 <Card key={schedule.id} className="relative">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <span className={typeConfig.color} title={typeConfig.label}>{typeConfig.icon}</span>
+                      <span className={cn("inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full", typeConfig.color)}>{typeConfig.label}</span>
                       <div>
                         <h3 className="font-semibold text-gray-900">{schedule.companyName}</h3>
                         <p className="text-sm text-gray-500">{schedule.roleTitle}</p>
@@ -305,7 +306,7 @@ export default function InterviewSchedule() {
                   <Card key={schedule.id} className="opacity-70">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <span className={typeConfig.color}>{typeConfig.icon}</span>
+                        <span className={cn("inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full", typeConfig.color)}>{typeConfig.label}</span>
                         <div>
                           <h3 className="font-semibold text-gray-900">{schedule.companyName}</h3>
                           <p className="text-sm text-gray-500">{schedule.roleTitle}</p>
@@ -373,7 +374,7 @@ export default function InterviewSchedule() {
               label="Interview Type"
               value={formData.type}
               onChange={(e) => setFormData({ ...formData, type: e.target.value, interviewType: e.target.value })}
-              options={Object.entries(TYPE_CONFIG).map(([k, v]) => ({ value: k, label: `${v.icon} ${v.label}` }))}
+              options={Object.entries(TYPE_CONFIG).map(([k, v]) => ({ value: k, label: v.label }))}
             />
             <Select
               label="Status"

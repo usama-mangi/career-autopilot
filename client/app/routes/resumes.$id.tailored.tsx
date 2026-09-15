@@ -6,8 +6,7 @@ import type { Resume } from "types";
 import { PageShell, PageHeader, Button, Textarea, Input, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
-  { title: "Career Autopilot | Tailored Resume Builder" },
-  { name: "description", content: "AI-powered resume customization for specific job roles" },
+  { title: "Career Autopilot | Tailored Resume Builder" },   { name: "description", content: "Tailor a resume to a specific job posting" },
 ];
 
 export default function TailoredResume() {
@@ -91,7 +90,7 @@ export default function TailoredResume() {
         subtitle={
           generating
             ? "Tailoring your resume for the target role..."
-            : "Customize your resume for a specific job with AI-powered keyword injection and reordering."
+            : "Customize your resume for a specific job: matched keywords move up, missing ones get flagged."
         }
       />
 
@@ -131,7 +130,7 @@ export default function TailoredResume() {
 
       {generating && (
         <div className="flex flex-col items-center gap-6 mt-8">
-          <img src="/images/resume-scan.gif" className="w-64" />
+          <img src="/images/resume-scan.gif" className="w-64" alt="" aria-hidden="true" />
           <p className="text-sm text-gray-500 animate-pulse">
             Analyzing the job description and customizing your resume...
           </p>

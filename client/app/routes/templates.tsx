@@ -207,14 +207,14 @@ export default function Templates() {
             <ul className="space-y-2">
               {result.customizationTips.map((tip) => (
                 <li key={tip} className="text-sm text-gray-700 flex items-start gap-2">
-                  <span className="text-green-500 mt-0.5">✓</span>
+                  <span className="text-success mt-0.5" aria-hidden="true">✓</span>
                   {tip}
                 </li>
               ))}
             </ul>
           </Card>
 
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
+          <div className="bg-[#FFF8F0] rounded-2xl p-6 border border-[#E8DDD1]">
             <p className="text-sm text-gray-700 leading-relaxed">{result.summary}</p>
           </div>
 

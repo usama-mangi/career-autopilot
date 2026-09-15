@@ -4,6 +4,7 @@ import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { cn } from "~/lib/utils";
 import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, Select, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
+import { MailIcon } from "~/components/ui/icons";
 import { suggestFollowUp } from "~/lib/follow-up";
 
 export const meta = () => [
@@ -12,10 +13,10 @@ export const meta = () => [
 ];
 
 const emailTypes = [
-  { value: "thank_you", label: "Thank You", icon: "🙏" },
-  { value: "check_in", label: "Check-in", icon: "👋" },
-  { value: "additional_materials", label: "Additional Materials", icon: "📎" },
-  { value: "custom", label: "Custom", icon: "✉️" },
+  { value: "thank_you", label: "Thank You" },
+  { value: "check_in", label: "Check-in" },
+  { value: "additional_materials", label: "Additional Materials" },
+  { value: "custom", label: "Custom" },
 ];
 
 export default function FollowUpEmails() {
@@ -213,7 +214,9 @@ export default function FollowUpEmails() {
               <Card key={email.id}>
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">{typeInfo?.icon || "✉️"}</span>
+                    <span className="flex items-center justify-center size-10 rounded-lg bg-[#F5EDE4] text-gray-600 shrink-0">
+                      <MailIcon className="size-5" />
+                    </span>
                     <div>
                       <h3 className="font-semibold text-gray-900">{email.subject}</h3>
                       <p className="text-sm text-gray-500">

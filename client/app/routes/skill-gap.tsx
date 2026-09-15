@@ -24,11 +24,11 @@ const difficultyConfig = {
 };
 
 const typeLabels: Record<string, string> = {
-  course: "📚 Course",
-  article: "📄 Article",
-  project: "🛠️ Project",
-  certification: "🎓 Certification",
-  documentation: "📖 Documentation",
+  course: "Course",
+  article: "Article",
+  project: "Project",
+  certification: "Certification",
+  documentation: "Documentation",
 };
 
 export default function SkillGap() {
@@ -134,7 +134,7 @@ export default function SkillGap() {
 
       {generating && (
         <div className="flex flex-col items-center gap-6 mt-8">
-          <img src="/images/resume-scan.gif" className="w-64" />
+          <img src="/images/resume-scan.gif" className="w-64" alt="" aria-hidden="true" />
           <p className="text-sm text-gray-500 animate-pulse">Comparing your skills against the job requirements...</p>
         </div>
       )}
@@ -162,10 +162,10 @@ export default function SkillGap() {
             </div>
             {result.presentSkills.length > 0 && (
               <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">✅ Skills You Have</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Skills you have</h3>
                 <div className="flex flex-wrap gap-2">
                   {result.presentSkills.map((skill) => (
-                    <span key={skill} className="px-3 py-1.5 bg-green-50 border border-green-200 text-green-700 rounded-lg text-sm font-medium">{skill}</span>
+                    <span key={skill} className="px-3 py-1.5 bg-success-50 border border-success-100 text-success-700 rounded-lg text-sm font-medium">{skill}</span>
                   ))}
                 </div>
               </div>
@@ -174,7 +174,7 @@ export default function SkillGap() {
 
           {result.missingSkills.length > 0 && (
             <div className="flex flex-col gap-4">
-              <h3 className="text-xl font-semibold text-gray-900">🎯 Skills to Develop</h3>
+              <h3 className="text-xl font-semibold text-gray-900">Skills to develop</h3>
               {result.missingSkills.map((item, i) => (
                 <Card key={item.skill}>
                   <div className="flex flex-row items-center gap-3 mb-4">

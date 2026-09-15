@@ -10,9 +10,9 @@ export const meta = () => [
 ];
 
 const sentimentConfig = {
-  positive: { class: "bg-green-100 text-green-700 border-green-200", icon: "⬆️" },
-  neutral: { class: "bg-gray-100 text-gray-700 border-gray-200", icon: "➡️" },
-  negative: { class: "bg-red-100 text-red-700 border-red-200", icon: "⬇️" },
+  positive: { class: "bg-success-50 text-success-700 border-success-100" },
+  neutral: { class: "bg-gray-100 text-gray-700 border-gray-200" },
+  negative: { class: "bg-danger-50 text-danger-700 border-danger-100" },
 };
 
 export default function InterviewPrep() {
@@ -212,7 +212,7 @@ export default function InterviewPrep() {
             </Card>
           ) : generating ? (
             <Card className="text-center py-12">
-              <img src="/images/resume-scan.gif" className="w-64 mx-auto" alt="Processing" />
+              <img src="/images/resume-scan.gif" className="w-64 mx-auto" alt="" aria-hidden="true" />
               <p className="mt-4 text-sm text-gray-500 animate-pulse">Researching company and generating briefing...</p>
             </Card>
           ) : result && (
@@ -297,7 +297,7 @@ export default function InterviewPrep() {
 	                    <h4 className="font-semibold text-gray-900 mb-3">Culture & Values</h4>
 	                    <div className="flex flex-wrap gap-2">
 	                      {result.culture.map((v: string, i: number) => (
-	                        <span key={i} className="px-3 py-1 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-lg text-sm font-medium">{v}</span>
+	                        <span key={i} className="px-3 py-1 bg-info-50 border border-info-100 text-info-700 rounded-lg text-sm font-medium">{v}</span>
 	                      ))}
 	                    </div>
 	                  </div>
@@ -353,7 +353,7 @@ export default function InterviewPrep() {
 	                      <ul className="space-y-2">
 	                        {result.technicalPrep.practiceProblems.map((p: string, i: number) => (
 	                          <li key={i} className="flex items-start gap-2 text-gray-700">
-	                            <span className="text-green-500 mt-0.5">✓</span> {p}
+	                            <span className="text-success mt-0.5" aria-hidden="true">✓</span> {p}
 	                          </li>
 	                        ))}
 	                      </ul>
@@ -440,7 +440,7 @@ export default function InterviewPrep() {
                         <h4 className="font-semibold text-gray-900 mb-3">Core Values</h4>
                         <div className="flex flex-wrap gap-2">
                           {result.cultureInsights.values.map((v: string, i: number) => (
-                            <span key={i} className="px-3 py-1 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-lg text-sm font-medium">{v}</span>
+                            <span key={i} className="px-3 py-1 bg-info-50 border border-info-100 text-info-700 rounded-lg text-sm font-medium">{v}</span>
                           ))}
                         </div>
                       </div>

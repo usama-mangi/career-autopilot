@@ -268,7 +268,7 @@ export default function JobsPage() {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75" />
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary-500" />
           </span>
-          <span className="text-xs font-semibold text-primary-600 uppercase tracking-wider">AI-powered search</span>
+          <span className="text-xs font-semibold text-primary-600 uppercase tracking-wider">Live search</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight mb-2">
           Scout your next role
@@ -1056,7 +1056,7 @@ function JobCard({
         {(job.seniorityLevel || job.jobFunction) && (
           <div className="flex items-center gap-1.5 mb-2.5 flex-wrap">
             {job.seniorityLevel && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 capitalize">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-info-50 text-info-700 capitalize">
                 {job.seniorityLevel}
               </span>
             )}

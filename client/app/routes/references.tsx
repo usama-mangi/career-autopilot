@@ -127,10 +127,10 @@ export default function References() {
 
   const statusColors: Record<string, string> = {
     not_requested: "bg-gray-100 text-gray-600",
-    requested: "bg-blue-100 text-blue-700",
-    agreed: "bg-green-100 text-green-700",
-    declined: "bg-red-100 text-red-700",
-    completed: "bg-purple-100 text-purple-700",
+    requested: "bg-info-50 text-info-700",
+    agreed: "bg-success-50 text-success-700",
+    declined: "bg-danger-50 text-danger-700",
+    completed: "bg-success-50 text-success-700",
   };
 
   if (loading) {

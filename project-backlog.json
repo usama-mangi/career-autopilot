@@ -85,11 +85,38 @@
         "TASK-07"
       ],
       "notes": "Wrapped 7 hard-fail AI paths in withAiGateway: generateCoverLetter, analyzeSkillGap, generateInterviewQuestions, estimateSalary, suggestTemplates, compareMultipleJds, generateTailoredResume (the latter persists inside the wrapper so an AI failure creates no orphan resume). Best-effort paths preserved by design and pinned by tests: create() analysis, generateFromProfile generation + trailing feedback, tailored-resume trailing ATS pass. Two behavior fixes: (1) generateFromProfile embeddings call moved best-effort - an embeddings outage no longer 500s a path meant to survive AI failure, it falls back to unranked projects; (2) create() now actually stores the shaped fallbackFeedback on analysis failure instead of dead-code fallback + empty {}. 17 new tests pin 502+shared message+no-partial-write per hard-fail path, 404-without-AI, and all best-effort behaviors. Suite 186 tests, build clean."
+    },
+    {
+      "id": "TASK-11",
+      "title": "UI/UX slop removal: purple/indigo purge, emoji-to-SVG icons, flat semantic score bars, modal focus trap, copy pass, design.yaml init",
+      "status": "closed",
+      "dependencies": [],
+      "notes": "DONE. Four UI gates pass. design.yaml initialized (tokens/brand/components/screens). Changes: (1) purple/indigo/pink/teal ad-hoc accents swept to semantic tokens (info/warning/success/danger/primary) in 24 files; (2) gradient score visuals flattened to semantic fills - ScoreGuage violet-blue arc, ScoreCircle, ui/Score + ui/ScoreDisplay ScoreBar, .score-bar-* utilities; (3) 4 blue-indigo gradient panels + 2 parchment gradients flattened; (4) ~95 emoji icons replaced with SVG glyphs (new components/ui/icons.tsx, Heroicons outline matching Sidebar) or plain labels in 14 files; (5) renamed gradient-border -> panel-soft, badge-purple -> badge-neutral, deleted dead primary-gradient utilities; (6) warm gray-300/500 added to @theme scale; section-title gray-400->gray-500 for AA (dark mode keeps 400: 5.4:1 there); (7) score label colors raised to 700-shades for AA on white; (8) Modal focus trap + focus restore; Button icon size now 44px, sm 36px on mobile; (9) landing copy through name-swap test (no more traverse/sherpa/compound-advantage), dead /privacy /terms /contact links replaced with working auth links, ErrorBoundary 'Oops!' -> plain copy + dashboard action; (10) 'AI-powered' replaced with mechanism copy in 7 spots; (11) ATS card tinted gradient -> flat card with semantic left border, thumbs-up/down given aria-labels, decorative images alt=''. Gates: typecheck + build green. Out of scope, flagged: consolidating the 4 score components into one (touches 15+ consumers)."
     }
   ],
   "log": {
-    "last_updated": "2026-09-13T07:38:23.796169+00:00",
+    "last_updated": "2026-09-15T06:32:07.219228+00:00",
     "recent_changes": [
+      {
+        "action": "update",
+        "task": "TASK-11",
+        "old_status": "active",
+        "new_status": "closed",
+        "at": "2026-09-15T06:32:07.219210+00:00"
+      },
+      {
+        "action": "update",
+        "task": "TASK-11",
+        "old_status": "to-do",
+        "new_status": "active",
+        "at": "2026-09-15T06:11:18.595006+00:00"
+      },
+      {
+        "action": "add",
+        "task": "TASK-11",
+        "status": "to-do",
+        "at": "2026-09-15T06:11:18.511228+00:00"
+      },
       {
         "action": "update",
         "task": "TASK-10",
@@ -123,27 +150,6 @@
         "old_status": "to-do",
         "new_status": "active",
         "at": "2026-09-13T07:19:20.217424+00:00"
-      },
-      {
-        "action": "update",
-        "task": "TASK-06",
-        "old_status": "active",
-        "new_status": "closed",
-        "at": "2026-09-13T07:09:42.030923+00:00"
-      },
-      {
-        "action": "update",
-        "task": "TASK-06",
-        "old_status": "to-do",
-        "new_status": "active",
-        "at": "2026-09-13T07:06:56.831014+00:00"
-      },
-      {
-        "action": "update",
-        "task": "TASK-05",
-        "old_status": "active",
-        "new_status": "closed",
-        "at": "2026-09-13T06:55:58.174364+00:00"
       }
     ]
   }

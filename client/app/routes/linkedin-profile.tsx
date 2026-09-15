@@ -206,7 +206,7 @@ export default function LinkedInProfile() {
             </Card>
           ) : generating ? (
             <Card className="text-center py-12">
-              <img src="/images/resume-scan.gif" className="w-64 mx-auto" alt="Processing" />
+              <img src="/images/resume-scan.gif" className="w-64 mx-auto" alt="" aria-hidden="true" />
               <p className="mt-4 text-sm text-gray-500 animate-pulse">Analyzing your LinkedIn profile...</p>
             </Card>
           ) : result && (
@@ -276,7 +276,7 @@ export default function LinkedInProfile() {
                       <h3 className="text-lg font-semibold text-gray-900 mb-3">Skill Recommendations</h3>
                       <div className="flex flex-wrap gap-2">
                         {result.skillRecommendations.map((s: string, i: number) => (
-                          <span key={i} className="px-3 py-1 bg-purple-50 border border-purple-200 text-purple-700 rounded-lg text-sm font-medium">{s}</span>
+                          <span key={i} className="px-3 py-1 bg-info-50 border border-info-100 text-info-700 rounded-lg text-sm font-medium">{s}</span>
                         ))}
                       </div>
                     </div>
@@ -333,7 +333,7 @@ export default function LinkedInProfile() {
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Skill Recommendations</h3>
                   <div className="flex flex-wrap gap-2">
                     {result.skillRecommendations.map((s: string, i: number) => (
-                      <span key={i} className="px-3 py-1 bg-purple-50 border border-purple-200 text-purple-700 rounded-lg text-sm font-medium">{s}</span>
+                      <span key={i} className="px-3 py-1 bg-info-50 border border-info-100 text-info-700 rounded-lg text-sm font-medium">{s}</span>
                     ))}
                   </div>
                 </Card>

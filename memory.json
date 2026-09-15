@@ -1,4 +1,10 @@
 {
   "version": 1,
-  "entries": {}
+  "entries": {
+    "design-system": {
+      "text": "Expedition Journal token set is authoritative in design.yaml (project root). Semantic status tokens: info/warning/success/danger, plus primary terracotta reserved for the one primary action per screen. Rules: no purple/indigo anywhere, no gradients in UI chrome, flat score fills only (#16a34a/#d97706/#dc2626/#1E5F8C), emoji never as icons (use client/app/components/ui/icons.tsx), scores pair number+label with color. Dark mode contrast note: warm gray-500 is AA on parchment but fails on dark charcoal, so dark section-title stays gray-400.",
+      "cat": "",
+      "updated": "2026-09-15T06:32:21.913315+00:00"
+    }
+  }
 }

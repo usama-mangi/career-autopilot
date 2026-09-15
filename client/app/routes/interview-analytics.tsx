@@ -91,7 +91,7 @@ export default function InterviewAnalytics() {
           {[
             { label: "Applications", value: analytics.totalApplications, color: "bg-gray-500" },
             { label: "Screens", value: analytics.screensCount, color: "bg-blue-500" },
-            { label: "Interviews", value: analytics.interviewsCount, color: "bg-purple-500" },
+            { label: "Interviews", value: analytics.interviewsCount, color: "bg-warning" },
             { label: "Offers", value: analytics.offersCount, color: "bg-green-500" },
           ].map((step, i) => {
             const maxVal = Math.max(...[analytics.totalApplications, analytics.screensCount, analytics.interviewsCount, analytics.offersCount], 1);
@@ -129,7 +129,7 @@ export default function InterviewAnalytics() {
         </Card>
         <Card>
           <div className="flex items-center gap-3">
-            <div className="size-10 rounded-lg bg-purple-50 flex items-center justify-center shrink-0"><svg className="size-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg></div>
+            <div className="size-10 rounded-lg bg-warning-50 flex items-center justify-center shrink-0"><svg className="size-5 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg></div>
             <div>
               <p className="text-xl font-bold text-gray-900">{analytics.interviewsCount}</p>
               <p className="text-xs text-gray-500">Interviews</p>
@@ -202,11 +202,11 @@ export default function InterviewAnalytics() {
                     <td className="py-2 px-3">
                       <span className={cn("px-2 py-0.5 rounded-full text-xs font-medium",
                         row.type === "phone" ? "bg-blue-100 text-blue-700" :
-                        row.type === "video" ? "bg-purple-100 text-purple-700" :
+                        row.type === "video" ? "bg-warning-50 text-warning-700" :
                         row.type === "onsite" ? "bg-green-100 text-green-700" :
                         row.type === "technical" ? "bg-orange-100 text-orange-700" :
-                        row.type === "behavioral" ? "bg-pink-100 text-pink-700" :
-                        row.type === "case_study" ? "bg-teal-100 text-teal-700" :
+                        row.type === "behavioral" ? "bg-info-50 text-info-700" :
+                        row.type === "case_study" ? "bg-warning-50 text-warning-700" :
                         row.type === "panel" ? "bg-primary-50 text-primary-600" :
                         row.type === "final" ? "bg-red-100 text-red-700" : "bg-[#F5EDE4] text-[#57534E]")}>
                         {row.type}

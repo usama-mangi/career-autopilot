@@ -11,9 +11,9 @@ import type { First90DaysTracker, First90EarlyWin, First90FeedbackLoop, First90P
  */
 
 const PHASE_STYLES: Record<string, { label: string; chip: string; bar: string }> = {
-  learning: { label: "Learning", chip: "bg-blue-50 text-blue-700 border-blue-100", bar: "bg-blue-500" },
-  contributing: { label: "Contributing", chip: "bg-purple-50 text-purple-700 border-purple-100", bar: "bg-purple-500" },
-  leading: { label: "Leading", chip: "bg-green-50 text-green-700 border-green-100", bar: "bg-green-500" },
+  learning: { label: "Learning", chip: "bg-info-50 text-info-700 border-info-100", bar: "bg-info" },
+  contributing: { label: "Contributing", chip: "bg-warning-50 text-warning-700 border-warning-100", bar: "bg-warning" },
+  leading: { label: "Leading", chip: "bg-success-50 text-success-700 border-success-100", bar: "bg-success" },
 };
 
 const IMPACT_STYLES: Record<string, string> = {

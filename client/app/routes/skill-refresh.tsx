@@ -16,9 +16,9 @@ function getPriorityColor(priority: string) {
 }
 
 function getLevelColor(level: string) {
-  if (level === "expert") return "bg-purple-100 text-purple-700";
-  if (level === "advanced") return "bg-blue-100 text-blue-700";
-  if (level === "intermediate") return "bg-green-100 text-green-700";
+  if (level === "expert") return "bg-primary-50 text-primary-600";
+  if (level === "advanced") return "bg-info-50 text-info-700";
+  if (level === "intermediate") return "bg-success-50 text-success-700";
   return "bg-gray-100 text-gray-700";
 }
 

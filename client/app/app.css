@@ -19,7 +19,9 @@
   --color-gray-50: #FFFBF5;
   --color-gray-100: #F5EDE4;
   --color-gray-200: #E8DDD1;
+  --color-gray-300: #C9BBA9;
   --color-gray-400: #9C8E7E;
+  --color-gray-500: #7A6D5F;
   --color-gray-600: #5C5046;
   --color-gray-900: #2C2621;
 
@@ -53,18 +55,19 @@
   --color-info-600: #1E4D7C;
   --color-info-700: #1E3A5F;
 
-  /* Badge colors — warm, earthy */
+  /* Badge colors — warm, earthy. Neutral takes the place of the old purple:
+     it carries no meaning, so it must not carry a hue. */
   --color-badge-green: #D1FAE5;
   --color-badge-red: #FEE2E2;
   --color-badge-yellow: #FEF3C7;
   --color-badge-blue: #DBEAFE;
-  --color-badge-purple: #E9D5FF;
+  --color-badge-neutral: #F5EDE4;
 
   --color-badge-green-text: #065F46;
   --color-badge-red-text: #991B1B;
   --color-badge-yellow-text: #713F12;
   --color-badge-blue-text: #1E3A5F;
-  --color-badge-purple-text: #6B21A8;
+  --color-badge-neutral-text: #5C5046;
 
   /* Shadows — warmer tone */
   --shadow-sm: 0 1px 3px rgba(44, 38, 33, 0.06);
@@ -145,7 +148,8 @@ label {
   }
 
   .section-title {
-    @apply text-xs font-semibold text-gray-400 uppercase tracking-wider;
+    /* gray-500, not gray-400: labels carry meaning, so they need AA contrast */
+    @apply text-xs font-semibold text-gray-500 uppercase tracking-wider;
   }
 
   /* Stat card — field notes style */
@@ -261,13 +265,14 @@ label {
     @apply h-full rounded-full transition-all duration-600 ease-out;
   }
 
-  .score-bar-green { background: linear-gradient(90deg, #22c55e, #10b981); }
-  .score-bar-yellow { background: linear-gradient(90deg, #f59e0b, #eab308); }
-  .score-bar-red { background: linear-gradient(90deg, #dc2626, #f59e0b); }
-  .score-bar-blue { background: linear-gradient(90deg, #2563eb, #7c3aed); }
+  /* Flat semantic fills. A score is a number; the bar only echoes it. */
+  .score-bar-green { background: #16a34a; }
+  .score-bar-yellow { background: #d97706; }
+  .score-bar-red { background: #dc2626; }
+  .score-bar-blue { background: #1E5F8C; }
 
-  /* Gradient utility — warm paper card */
-  .gradient-border {
+  /* Soft panel — warm parchment, no gradient despite the old name */
+  .panel-soft {
     @apply bg-[#FFF8F0] border border-[#E8DDD1] p-4 rounded-xl;
   }
 
@@ -342,14 +347,6 @@ label {
 }
 
 /* ─── Utilities ─────────────────────────────────── */
-
-@utility primary-gradient {
-  background: #2563eb;
-}
-
-@utility primary-gradient-hover {
-  background: #1d4ed8;
-}
 
 /* ─── Dark mode (class-based) ────────────────────── */
 
@@ -432,7 +429,11 @@ html.dark .score-bar {
   @apply bg-[#2C2621];
 }
 
-html.dark .gradient-border {
+html.dark .section-title {
+  @apply text-gray-400;
+}
+
+html.dark .panel-soft {
   @apply bg-[#231F1C] border-[#3A332E];
 }
 

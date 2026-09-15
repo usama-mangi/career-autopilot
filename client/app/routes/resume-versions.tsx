@@ -380,7 +380,7 @@ export default function ResumeVersions() {
             </div>
 
             {/* Quick Actions */}
-            <div className="mt-6 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-100">
+            <div className="mt-6 p-6 bg-[#FFF8F0] rounded-2xl border border-[#E8DDD1]">
               <h3 className="text-lg font-semibold text-gray-900 mb-3">Quick Actions</h3>
               <div className="grid sm:grid-cols-3 gap-4">
                 <Link
@@ -389,7 +389,7 @@ export default function ResumeVersions() {
                 >
                   <img src="/icons/magic.svg" className="size-8 mx-auto text-blue-600 mb-2" alt="" />
                   <p className="font-medium text-gray-900">Tailor Resume</p>
-                  <p className="text-sm text-gray-500 mt-1">AI-powered customization for a specific job</p>
+                  <p className="text-sm text-gray-500 mt-1">Rewrites the resume around one posting's keywords</p>
                 </Link>
                 <Link
                   to={`/resumes/${id}/cover-letter`}

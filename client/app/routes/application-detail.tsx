@@ -4,11 +4,25 @@ import { useEffect, useState } from "react";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { ErrorBanner, reportError, useToastHelpers } from "~/components/ui";
+import { CalendarIcon, PencilIcon, ScaleIcon, ChatIcon, RocketIcon } from "~/components/ui/icons";
+
+/** Toolkit glyphs, keyed by the row's icon name. Decorative; labels carry meaning. */
+function ToolkitIcon({ name }: { name: string }) {
+  const className = "size-4 text-gray-500";
+  switch (name) {
+    case "calendar": return <CalendarIcon className={className} />;
+    case "notes": return <PencilIcon className={className} />;
+    case "compare": return <ScaleIcon className={className} />;
+    case "coach": return <ChatIcon className={className} />;
+    case "rocket": return <RocketIcon className={className} />;
+    default: return null;
+  }
+}
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bgColor: string }> = {
   draft: { label: "Draft", color: "text-gray-600", bgColor: "bg-gray-100" },
   applied: { label: "Applied", color: "text-blue-600", bgColor: "bg-blue-100" },
-  phone_screen: { label: "Phone Screen", color: "text-purple-600", bgColor: "bg-purple-100" },
+  phone_screen: { label: "Phone Screen", color: "text-info", bgColor: "bg-info-50" },
   interviewing: { label: "Interviewing", color: "text-amber-600", bgColor: "bg-amber-100" },
   offer: { label: "Offer", color: "text-green-600", bgColor: "bg-green-100" },
   rejected: { label: "Rejected", color: "text-red-600", bgColor: "bg-red-100" },
@@ -120,7 +134,7 @@ function StageToolkit({ appId, companyName, roleTitle, status, artifacts }: Stag
   if (status === "phone_screen" || status === "interviewing") {
     rows.push({
       key: "interview",
-      icon: "📅",
+      icon: "calendar",
       label: "Interview schedule",
       hint: "Every round, tracked in one place",
       items: schedules.map((s) => ({
@@ -134,7 +148,7 @@ function StageToolkit({ appId, companyName, roleTitle, status, artifacts }: Stag
   if (!OFFER_STAGES.has(status)) {
     rows.push({
       key: "notes",
-      icon: "📝",
+      icon: "notes",
       label: "Interview notes",
       hint: status === "draft" || status === "applied"
         ? "Capture prep and early conversations"
@@ -151,7 +165,7 @@ function StageToolkit({ appId, companyName, roleTitle, status, artifacts }: Stag
     rows.push(
     {
       key: "compare",
-      icon: "⚖️",
+      icon: "compare",
       label: "Offer comparison",
       hint: "Weigh this offer against your others",
       items: comparisons.map((c) => ({ id: c.id, title: c.name, to: `/offers/compare?comparison=${c.id}` })),
@@ -159,7 +173,7 @@ function StageToolkit({ appId, companyName, roleTitle, status, artifacts }: Stag
     },
     {
       key: "coach",
-      icon: "💬",
+      icon: "coach",
       label: "Negotiation coach",
       hint: "Strategy, scripts, and email templates",
       items: coaches.map((c) => ({ id: c.id, title: `${c.companyName} — ${c.roleTitle} strategy`, to: `/offers/negotiate/${c.id}` })),
@@ -167,7 +181,7 @@ function StageToolkit({ appId, companyName, roleTitle, status, artifacts }: Stag
     },
     {
       key: "plan",
-      icon: "🎉",
+      icon: "rocket",
       label: "First 90 days",
       hint: "Milestones for your first three months",
       items: trackers.map((t) => ({ id: t.id, title: `${t.companyName} — ${t.roleTitle}`, to: `/onboarding/first-90-days/${t.id}` })),
@@ -193,7 +207,7 @@ function StageToolkit({ appId, companyName, roleTitle, status, artifacts }: Stag
           return (
             <div key={row.key} className="rounded-lg border border-[#E8DDD1] bg-white p-3">
               <div className="flex items-center gap-2 mb-1">
-                <span aria-hidden="true">{row.icon}</span>
+                <ToolkitIcon name={row.icon} />
                 <p className="text-sm font-medium text-gray-900">{row.label}</p>
               </div>
               <p className="text-[11px] text-gray-500 mb-2">{row.hint}</p>
@@ -482,7 +496,7 @@ export default function ApplicationDetail() {
                     </span>
                   )}
                   {app.status === "accepted" && (
-                    <span className="ml-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-green-50 text-green-700 border border-green-200">Accepted 🎉</span>
+                    <span className="ml-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-success-50 text-success-700 border border-success-100">Accepted</span>
                   )}
                 </div>
                 <div className="flex items-center gap-3 mt-3 text-sm text-gray-400">

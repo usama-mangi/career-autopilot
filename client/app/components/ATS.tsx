@@ -10,9 +10,11 @@ function getScoreBarClass(score: number) {
 }
 
 function getScoreBg(score: number) {
-  if (score > 69) return "from-green-100";
-  if (score > 49) return "from-yellow-100";
-  return "from-red-100";
+  // Tint only the left edge of the card so the verdict reads at a glance
+  // without bathing the whole panel in status color.
+  if (score > 69) return "border-l-4 border-l-success";
+  if (score > 49) return "border-l-4 border-l-warning";
+  return "border-l-4 border-l-danger";
 }
 
 function getScoreIcon(score: number) {
@@ -35,14 +37,14 @@ const ATS = ({
   return (
     <div
       className={cn(
-        "rounded-xl shadow-sm w-full bg-gradient-to-b to-white p-6 flex flex-col gap-4 border border-gray-100",
+        "rounded-xl shadow-sm w-full bg-white p-6 flex flex-col gap-4 border border-[#E8DDD1]",
         getScoreBg(score),
       )}
     >
       <div className="flex flex-row gap-4 items-center">
         <img
           src={getScoreIcon(score)}
-          alt="ATS"
+          alt=""
           className="w-10 h-10"
         />
         <div className="flex-1">
@@ -82,7 +84,7 @@ const ATS = ({
                       ? "/icons/check.svg"
                       : "/icons/warning.svg"
                   }
-                  alt={suggestion.type === "good" ? "pass" : "warning"}
+                  alt=""
                   className="w-4 h-4 flex-shrink-0"
                 />
                 <p className="text-sm text-gray-600">{suggestion.tip}</p>
@@ -91,6 +93,7 @@ const ATS = ({
                 <button
                   onClick={() => onRate(tipKey, current === 'up' ? null : 'up')}
                   title="Helpful"
+                  aria-label="Helpful"
                   className={cn(
                     "flex items-center justify-center size-6 rounded-full border transition-colors cursor-pointer",
                     current === 'up'
@@ -98,11 +101,12 @@ const ATS = ({
                       : "bg-white border-gray-200 text-gray-400 hover:text-gray-600",
                   )}
                 >
-                  <img src="/icons/thumb-up.svg" alt="thumbs up" className="size-3" />
+                  <img src="/icons/thumb-up.svg" alt="" className="size-3" />
                 </button>
                 <button
                   onClick={() => onRate(tipKey, current === 'down' ? null : 'down')}
                   title="Not helpful"
+                  aria-label="Not helpful"
                   className={cn(
                     "flex items-center justify-center size-6 rounded-full border transition-colors cursor-pointer",
                     current === 'down'
@@ -110,7 +114,7 @@ const ATS = ({
                       : "bg-white border-gray-200 text-gray-400 hover:text-gray-600",
                   )}
                 >
-                  <img src="/icons/thumb-down.svg" alt="thumbs down" className="size-3" />
+                  <img src="/icons/thumb-down.svg" alt="" className="size-3" />
                 </button>
               </div>
             </div>

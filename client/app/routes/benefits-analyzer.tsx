@@ -14,9 +14,9 @@ export const meta = () => [
 function getRatingColor(rating: string) {
   switch (rating) {
     case "excellent": return "bg-green-100 text-green-700";
-    case "good": return "bg-blue-100 text-blue-700";
-    case "average": return "bg-yellow-100 text-yellow-700";
-    case "below_average": return "bg-orange-100 text-orange-700";
+    case "good": return "bg-success-50 text-success-700";
+    case "average": return "bg-warning-50 text-warning-700";
+    case "below_average": return "bg-warning-50 text-warning-700";
     case "poor": return "bg-red-100 text-red-700";
     default: return "bg-gray-100 text-gray-700";
   }
@@ -182,7 +182,7 @@ export default function BenefitsAnalyzer() {
 
               {/* Total Comp Value */}
               {result.totalCompensationValue > 0 && (
-                <Card className="bg-gradient-to-r from-[#FFF8F0] to-[#FFFBF5] border border-[#E8DDD1] p-6 text-center">
+                <Card className="bg-[#FFF8F0] border border-[#E8DDD1] p-6 text-center">
                   <div className="text-sm text-primary-600 mb-1">Estimated Benefits Value</div>
                   <div className="text-3xl font-bold text-gray-900">{formatMoney(result.totalCompensationValue)}/yr</div>
                 </Card>

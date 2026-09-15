@@ -111,7 +111,7 @@ export default function Share() {
               />
             </div>
           ) : report.imagePath ? (
-            <div className="gradient-border w-full max-w-sm mx-auto">
+            <div className="panel-soft w-full max-w-sm mx-auto">
               <img src={getUploadUrl(`/uploads/images/${report.imagePath}`)} className="w-full h-auto object-contain rounded-2xl" alt="Resume preview" />
             </div>
           ) : (
@@ -188,10 +188,10 @@ export default function Share() {
           )}
 
           {/* CTA */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8 border border-blue-100 text-center flex flex-col items-center gap-4">
+          <div className="bg-[#FFF8F0] rounded-2xl p-8 border border-[#E8DDD1] text-center flex flex-col items-center gap-4">
             <p className="text-lg font-semibold text-gray-900">Want to create your own resume?</p>
             <p className="text-sm text-gray-600 max-w-md">
-              Get AI-powered resume analysis, tailoring, interview prep, and more — for free.
+              Get resume scoring, tailoring, interview prep, and application tracking, free to start.
             </p>
             <Link to="/register"><Button>Get Started →</Button></Link>
           </div>

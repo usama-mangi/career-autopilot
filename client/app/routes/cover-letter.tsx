@@ -174,7 +174,7 @@ export default function CoverLetter() {
 
       {generating && (
         <div className="flex flex-col items-center gap-6 mt-8">
-          <img src="/images/resume-scan.gif" className="w-64" />
+          <img src="/images/resume-scan.gif" className="w-64" alt="" aria-hidden="true" />
           <p className="text-sm text-gray-500 animate-pulse">
             Analyzing your resume and tailoring the perfect cover letter...
           </p>

@@ -2,8 +2,8 @@ import { Link } from "react-router";
 import { PageShell, Button } from "~/components/ui";
 
 export const meta = () => [
-  { title: "Career Autopilot — Your Career Traverse Starts Here" },
-  { name: "description", content: "AI-powered career platform that threads context from first search to signed offer. One system, not five tools. Your sherpa for the entire job hunt." },
+  { title: "Career Autopilot — one pipeline from job search to first 90 days" },
+  { name: "description", content: "Search jobs, tailor your resume to each posting, track applications, prep for interviews, and compare offers. Scores, notes, and offers stay linked in one pipeline." },
 ];
 
 const CAMPS = [
@@ -36,7 +36,7 @@ export default function Landing() {
             <Button variant="ghost" size="sm">Sign in</Button>
           </Link>
           <Link to="/register">
-            <Button size="sm">Begin your traverse</Button>
+            <Button size="sm">Create account</Button>
           </Link>
         </div>
       </nav>
@@ -47,21 +47,22 @@ export default function Landing() {
           {/* Left — thesis + CTA */}
           <div className="relative z-10">
             <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 tracking-[-0.03em] leading-[1.05] mb-6">
-              Your career traverse
+              One pipeline from
               <br />
-              starts here.
+              search to signed offer.
             </h1>
 
             <p className="text-lg text-gray-600 leading-relaxed mb-8 max-w-lg">
-              One AI-powered system from first search to signed offer.
-              Every stage feeds the next — your resume informs your interviews,
-              your offers inform your negotiation. No context lost between tools.
+              Job boards, resumes, tracking, interview prep, and offers usually
+              live in five tools. Here they share one database: the resume you
+              scored against a posting feeds the interview you prep for, and the
+              offer you compare.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 mb-5">
               <Link to="/register">
                 <Button size="lg" className="w-full sm:w-auto px-8">
-                  Start your expedition
+                  Create free account
                 </Button>
               </Link>
               <Link to="/jobs">
@@ -136,8 +137,8 @@ export default function Landing() {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-gray-900">Your AI Sherpa</p>
-                  <p className="text-[10px] text-gray-500">Compounds context across all 7 camps</p>
+                  <p className="text-xs font-semibold text-gray-900">Why the context carries over</p>
+                  <p className="text-[10px] text-gray-500">One data model behind all seven stages</p>
                 </div>
               </div>
             </div>
@@ -149,8 +150,8 @@ export default function Landing() {
       <section className="py-20 bg-[#FFF8F0] border-t border-[#E8DDD1]">
         <div className="max-w-6xl mx-auto px-6 lg:px-8">
           <div className="max-w-lg mb-14">
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">The traverse, explained</h2>
-            <p className="text-gray-600">Seven base camps. One AI thread connecting them all. No context switching between tools.</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-3">Seven stages, one record per job</h2>
+            <p className="text-gray-600">Each stage below writes back to the same application, so nothing gets retyped and nothing gets lost between tools.</p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -183,11 +184,11 @@ export default function Landing() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-gray-900 mb-1">The compound advantage</h3>
+                    <h3 className="text-base font-bold text-gray-900 mb-1">Every stage writes back</h3>
                     <p className="text-sm text-gray-600 leading-relaxed max-w-2xl">
-                      When you tailor a resume for a job, that context feeds your interview prep.
-                      When you negotiate an offer, the AI recalls your entire application history.
-                      Every stage strengthens the next — no other tool threads this signal.
+                      Tailor a resume for a posting and the matched keywords are stored with the
+                      application. Prep for the interview and the notes attach to that same record.
+                      Get an offer and the comparison pulls the salary data you already entered.
                     </p>
                   </div>
                 </div>
@@ -205,8 +206,8 @@ export default function Landing() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
             </svg>
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">Ready to start your traverse?</h2>
-          <p className="text-gray-600 mb-8 max-w-md mx-auto">Your sherpa is ready. Seven camps, one route, zero context switching.</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-3">Score your first resume in minutes</h2>
+          <p className="text-gray-600 mb-8 max-w-md mx-auto">Create an account, paste a job posting, and see exactly where your resume matches and where it falls short.</p>
           <Link to="/register">
             <Button size="lg" className="px-8">Create free account</Button>
           </Link>
@@ -218,9 +219,8 @@ export default function Landing() {
         <div className="max-w-6xl mx-auto px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <span className="text-sm text-gray-500">&copy; 2026 Career Autopilot</span>
           <div className="flex items-center gap-6 text-sm text-gray-500">
-            <Link to="/privacy" className="hover:text-gray-700 transition-colors">Privacy</Link>
-            <Link to="/terms" className="hover:text-gray-700 transition-colors">Terms</Link>
-            <Link to="/contact" className="hover:text-gray-700 transition-colors">Contact</Link>
+            <Link to="/login" className="hover:text-gray-700 transition-colors">Sign in</Link>
+            <Link to="/register" className="hover:text-gray-700 transition-colors">Create account</Link>
           </div>
         </div>
       </footer>

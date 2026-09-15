@@ -5,15 +5,14 @@ import { api } from "~/lib/api";
 import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, Select, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
-  { title: "Career Autopilot | Mock Interview" },
-  { name: "description", content: "AI-powered mock interview simulator with real-time feedback" },
+  { title: "Career Autopilot | Mock Interview" },   { name: "description", content: "Practice interview questions and get scored feedback" },
 ];
 
 const QUESTION_TYPES = {
-  behavioral: { label: "Behavioral", color: "bg-purple-100 text-purple-700", icon: "💬" },
-  technical: { label: "Technical", color: "bg-blue-100 text-blue-700", icon: "⚙️" },
-  situational: { label: "Situational", color: "bg-teal-100 text-teal-700", icon: "🧠" },
-  case_study: { label: "Case Study", color: "bg-orange-100 text-orange-700", icon: "📊" },
+  behavioral: { label: "Behavioral", color: "bg-info-50 text-info-700" },
+  technical: { label: "Technical", color: "bg-[#F5EDE4] text-gray-700" },
+  situational: { label: "Situational", color: "bg-warning-50 text-warning-700" },
+  case_study: { label: "Case Study", color: "bg-primary-50 text-primary-600" },
 };
 
 export default function MockInterview() {
@@ -204,7 +203,7 @@ export default function MockInterview() {
                   label="Interview Type"
                   value={formData.type}
                   onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                  options={Object.entries(QUESTION_TYPES).map(([k, v]) => ({ value: k, label: `${v.icon} ${v.label}` }))}
+                  options={Object.entries(QUESTION_TYPES).map(([k, v]) => ({ value: k, label: v.label }))}
                 />
 
                 <Input
@@ -269,7 +268,6 @@ export default function MockInterview() {
             <Card>
               <div className="mb-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-2xl">{QUESTION_TYPES[currentQuestion.type as keyof typeof QUESTION_TYPES]?.icon || "❓"}</span>
                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${QUESTION_TYPES[currentQuestion.type as keyof typeof QUESTION_TYPES]?.color}`}>
                     {QUESTION_TYPES[currentQuestion.type as keyof typeof QUESTION_TYPES]?.label}
                   </span>
@@ -338,12 +336,12 @@ export default function MockInterview() {
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <span className="text-green-500">✓</span> Strengths
+                <span className="text-success" aria-hidden="true">✓</span> Strengths
               </h3>
               <ul className="space-y-2">
                 {feedback.strengths?.map((s: string, i: number) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                    <span className="text-green-500 mt-0.5">•</span> {s}
+                    <span className="text-success mt-0.5" aria-hidden="true">•</span> {s}
                   </li>
                 ))}
               </ul>
@@ -351,12 +349,12 @@ export default function MockInterview() {
 
             <Card>
               <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <span className="text-red-500">⚠</span> Areas for Improvement
+                <span className="text-danger" aria-hidden="true">⚠</span> Areas for improvement
               </h3>
               <ul className="space-y-2">
                 {feedback.areasForImprovement?.map((a: string, i: number) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
-                    <span className="text-red-500 mt-0.5">•</span> {a}
+                    <span className="text-danger mt-0.5" aria-hidden="true">•</span> {a}
                   </li>
                 ))}
               </ul>

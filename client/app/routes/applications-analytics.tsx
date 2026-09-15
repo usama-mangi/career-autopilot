@@ -128,7 +128,7 @@ export default function ApplicationsAnalytics() {
           {[
             { label: "Applications", value: analytics.total, color: "bg-gray-500" },
             { label: "Screens", value: analytics.byStatus.phone_screen || 0, color: "bg-blue-500" },
-            { label: "Interviews", value: analytics.byStatus.interviewing || 0, color: "bg-purple-500" },
+            { label: "Interviews", value: analytics.byStatus.interviewing || 0, color: "bg-warning" },
             { label: "Offers", value: analytics.byStatus.offer || 0, color: "bg-green-500" },
           ].map((step) => {
             const maxVal = Math.max(

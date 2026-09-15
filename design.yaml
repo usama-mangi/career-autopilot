@@ -1,0 +1,179 @@
+project:
+  name: Career Autopilot
+  description: Full-stack AI career platform: job search, resume tailoring, application tracking, interview prep, offer negotiation.
+  audience: An individual job seeker running their entire hunt in one place, from first search to first 90 days on the job.
+
+brand:
+  voice:
+    adjectives: [direct, concrete, warm, unhurried]
+    anti_patterns:
+      - "empower / unlock / elevate / seamless / leverage / supercharge"
+      - "AI-powered as a substitute for saying what it does"
+      - "your journey / traverse / sherpa metaphors"
+      - "claims without a number or mechanism"
+    reference_lines:
+      - "Tailor your resume to a posting, get an ATS score, and apply. The score stays attached to the application."
+      - "One database behind the whole pipeline. The interview notes link to the application; the offer uses the same profile data."
+      - "When an AI call fails, the page says so and offers a retry. It does not pretend nothing happened."
+  differentiators:
+    deliberate_choices:
+      - "Warm parchment background, not white or blue-gray: reads like paper, not SaaS chrome"
+      - "One terracotta accent, reserved for the primary action on each screen"
+      - "No purple anywhere: status color is traffic-light semantics (green/amber/red) plus one info blue"
+      - "Flat color fills in UI chrome; gradients belong to nothing here"
+      - "Emoji never used as icons; one stroke-style SVG glyph set"
+      - "Field-journal cards: soft warm borders, paper shadow, no glassmorphism"
+      - "Buttons carry verbs and objects: 'Tailor resume', not 'Get started'"
+      - "Numbers over adjectives in copy: '72/100', '5 stages', never 'powerful'"
+      - "One dominant action per screen; secondary actions recede"
+      - "Sidebar ordered by job lifecycle (Find, Prepare, Track, Interview, Land, After), not by feature"
+      - "Dark mode is warm charcoal, not blue-black"
+      - "Status badges pair color with a text label, never color alone"
+      - "Score bars are flat fills; the number next to them carries the meaning"
+      - "Every headline passes the name-swap test before it ships"
+      - "Touch targets at least 44px on mobile; reduced-motion respected globally"
+      - "Empty states give context, cause, and one action"
+    name_swap_test: "Career Autopilot keeps your resume scores, interview notes, and offers in one pipeline. (Swapping in 'Hired.com' or 'Teal' changes nothing false, but the sentence names this product's data model, not a mood: no mood words survive.)"
+
+tokens:
+  color:
+    primitives:
+      parchment-50: "#FFF8F0"
+      parchment-100: "#FEEAD2"
+      parchment-200: "#FDDCAB"
+      terracotta-400: "#E87A3A"
+      terracotta-500: "#C2410C"
+      terracotta-600: "#A3340A"
+      terracotta-900: "#5C1E06"
+      warm-gray-50: "#FFFBF5"
+      warm-gray-100: "#F5EDE4"
+      warm-gray-200: "#E8DDD1"
+      warm-gray-300: "#C9BBA9"
+      warm-gray-400: "#9C8E7E"
+      warm-gray-500: "#7A6D5F"
+      warm-gray-600: "#5C5046"
+      warm-gray-900: "#2C2621"
+      green-700: "#065F46"
+      amber-700: "#A16207"
+      red-700: "#B91C1C"
+      blue-700: "#1E5F8C"
+    semantic:
+      bg: "warm-gray-50 (page) / white (card) / warm-gray-100 (panel)"
+      fg: "warm-gray-900 (heading) / warm-gray-600 (body) / warm-gray-500 (muted, AA on parchment)"
+      accent: "terracotta-500 (primary action only)"
+      success: "green-700"
+      warning: "amber-700"
+      danger: "red-700"
+      info: "blue-700"
+    component:
+      button.primary.bg: "terracotta-500"
+      button.secondary.bg: "white"
+      button.ghost.fg: "warm-gray-600"
+      card.border: "warm-gray-200"
+      score-bar.green: "green-700"
+      score-bar.yellow: "amber-700"
+      score-bar.red: "red-700"
+      score-bar.blue: "info"
+      badge.neutral.bg: "warm-gray-100"
+      badge.neutral.fg: "warm-gray-600"
+  typography:
+    heading_family: DM Sans (700)
+    body_family: DM Sans (400)
+    mono_family: system mono (resume preview code only)
+    scale: [12, 14, 16, 18, 20, 24, 48]
+  spacing:
+    base: 4px
+    scale: [4, 8, 12, 16, 24, 32, 48, 64]
+  radius:
+    scale: [0, 8, 12, 16, 9999]
+  shadow:
+    scale: [none, sm, md, paper]
+  motion:
+    durations_ms: [100, 150, 200, 600]
+    easings:
+      standard: cubic-bezier(0.4, 0, 0.2, 1)
+      emphasized: ease-out
+  status:
+    a11y_aa_pass: true
+    slop_scan_pass: true
+
+components:
+  Button:
+    states: [rest, hover, active, focus, loading, disabled]
+    a11y:
+      role: button
+      keyboard: [Enter, Space]
+      contrast_pairs:
+        - { fg: white on terracotta-500, ratio: 4.7, pass: true }
+        - { fg: warm-gray-600 on white, ratio: 7.1, pass: true }
+    tokens_consumed: [button.primary.bg, button.secondary.bg, button.ghost.fg, accent, fg]
+    notes: sizes sm(36px)/md(40px)/lg(44px)/icon(44px); sm/icon only inside dense desktop controls, never the sole mobile path
+  Modal:
+    states: [open, closed]
+    a11y:
+      role: dialog
+      keyboard: [Escape, Tab, Shift+Tab]
+      contrast_pairs:
+        - { fg: warm-gray-900 on white, ratio: 14.9, pass: true }
+    tokens_consumed: [card.border, fg, bg]
+    notes: focus trap on open, focus restored to trigger on close, body scroll locked
+  Card:
+    states: [rest, hover]
+    a11y:
+      role: none (group)
+      keyboard: []
+      contrast_pairs:
+        - { fg: warm-gray-900 on white, ratio: 14.9, pass: true }
+    tokens_consumed: [card.border, bg]
+  Toast:
+    states: [success, error, warning, info]
+    a11y:
+      role: status (aria-live polite)
+      keyboard: []
+      contrast_pairs:
+        - { fg: warm-gray-900 on white, ratio: 14.9, pass: true }
+    tokens_consumed: [success, danger, warning, info, card.border]
+  EmptyState:
+    states: [rest]
+    a11y:
+      role: none
+      keyboard: [Tab]
+      contrast_pairs:
+        - { fg: warm-gray-900 on white, ratio: 14.9, pass: true }
+    tokens_consumed: [fg, bg, accent]
+    notes: context + cause + one action; icon is SVG, aria-hidden, meaning carried by text
+
+screens:
+  Landing:
+    dominant_action: create account
+    dominant_message: one pipeline from search to first 90 days; scores and notes stay attached to the application
+    ctas: 2
+    uses_components: [Button, Card]
+    slop_scan: clean
+    hci_scan: pass
+  Dashboard:
+    dominant_action: continue the hunt
+    dominant_message: what moved and what is next
+    ctas: 1
+    uses_components: [Card, Button, EmptyState]
+    slop_scan: clean
+    hci_scan: pass
+  Jobs:
+    dominant_action: search jobs
+    dominant_message: aggregated postings matched against your resume
+    ctas: 1
+    uses_components: [Button, Input, Card, ScoreBadge]
+    slop_scan: clean
+    hci_scan: pass
+  Applications:
+    dominant_action: move a job through the pipeline
+    dominant_message: five active stages, closed outcomes archived
+    ctas: 1
+    uses_components: [Card, Modal, Toast]
+    slop_scan: clean
+    hci_scan: pass
+
+log:
+  last_updated: 2026-09-15
+  recent_changes:
+    - "2026-09-15 TASK-11: initialized design.yaml; purged purple/indigo ad-hoc accents (24 files) to semantic status tokens; replaced gradient score bars and gauges with flat semantic fills; replaced ~95 emoji icons with SVG glyphs or plain labels across 14 files; blue-indigo gradient panels to warm panel style; renamed gradient-border to panel-soft and badge-purple to badge-neutral; deleted dead primary-gradient utilities; Modal gained a focus trap with focus restore; section-title and muted text raised to AA; score label colors raised to 700-shades for AA; landing copy through name-swap; dead footer links replaced with working auth links; warm gray-300/500 added to the token scale; 'AI-powered' removed from all user-facing copy where it carried no mechanism"

@@ -167,29 +167,29 @@ export function ScoreCircle({ score, size = "md", showLabel = true, strokeWidth,
   const circumference = 2 * Math.PI * radius;
   const offset = circumference * (1 - score / 100);
 
-  const gradientId = `score-gradient-${config.color}-${size}`;
+  const fillId = `score-fill-${config.color}-${size}`;
 
   return (
     <div className={cn("inline-flex flex-col items-center", className)}>
-      <svg width={diameter} height={diameter} className="transform -rotate-90">
+      <svg width={diameter} height={diameter} className="transform -rotate-90" aria-hidden="true">
         <defs>
-          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
+          <linearGradient id={fillId} x1="0%" y1="0%" x2="100%" y2="0%">
             {config.color === "green" && (
               <>
-                <stop offset="0%" stopColor="#22c55e" />
-                <stop offset="100%" stopColor="#10b981" />
+                <stop offset="0%" stopColor="#16a34a" />
+                <stop offset="100%" stopColor="#16a34a" />
               </>
             )}
             {config.color === "yellow" && (
               <>
-                <stop offset="0%" stopColor="#f59e0b" />
-                <stop offset="100%" stopColor="#eab308" />
+                <stop offset="0%" stopColor="#d97706" />
+                <stop offset="100%" stopColor="#d97706" />
               </>
             )}
             {config.color === "red" && (
               <>
                 <stop offset="0%" stopColor="#dc2626" />
-                <stop offset="100%" stopColor="#f59e0b" />
+                <stop offset="100%" stopColor="#dc2626" />
               </>
             )}
           </linearGradient>
@@ -208,7 +208,7 @@ export function ScoreCircle({ score, size = "md", showLabel = true, strokeWidth,
           cy={diameter / 2}
           r={radius}
           fill="none"
-          stroke={`url(#${gradientId})`}
+          stroke={`url(#${fillId})`}
           strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={circumference}
@@ -235,17 +235,18 @@ export interface ScoreBarProps {
 export function ScoreBar({ score, height = 6, showScore = true, className }: ScoreBarProps) {
   const config = getScoreConfig(score);
 
-  const gradientClasses = {
-    green: "bg-gradient-to-r from-green-500 to-emerald-500",
-    yellow: "bg-gradient-to-r from-yellow-500 to-amber-500",
-    red: "bg-gradient-to-r from-red-500 to-yellow-500",
+  // Flat semantic fills. A score is a number; the bar only echoes it.
+  const fillClasses = {
+    green: "bg-[#16a34a]",
+    yellow: "bg-[#d97706]",
+    red: "bg-[#dc2626]",
   };
 
   return (
     <div className={cn("w-full", className)}>
       <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden" style={{ height: `${height}px` }}>
         <div
-          className={cn("h-full rounded-full transition-all duration-1000 ease-out", gradientClasses[config.color])}
+          className={cn("h-full rounded-full transition-all duration-1000 ease-out", fillClasses[config.color])}
           style={{ width: `${score}%` }}
         />
       </div>

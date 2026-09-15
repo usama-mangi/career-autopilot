@@ -12,10 +12,10 @@ export const meta = () => [
 
 const recommendations = [
   { value: "strong_hire", label: "Strong Hire", class: "bg-green-100 text-green-700" },
-  { value: "hire", label: "Hire", class: "bg-blue-100 text-blue-700" },
-  { value: "neutral", label: "Neutral", class: "bg-yellow-100 text-yellow-700" },
-  { value: "no_hire", label: "No Hire", class: "bg-orange-100 text-orange-700" },
-  { value: "strong_no_hire", label: "Strong No Hire", class: "bg-red-100 text-red-700" },
+  { value: "hire", label: "Hire", class: "bg-success-50 text-success-700" },
+  { value: "neutral", label: "Neutral", class: "bg-warning-50 text-warning-700" },
+  { value: "no_hire", label: "No Hire", class: "bg-warning-50 text-warning-700" },
+  { value: "strong_no_hire", label: "Strong No Hire", class: "bg-danger-50 text-danger-700" },
 ];
 
 export default function InterviewerFeedback() {

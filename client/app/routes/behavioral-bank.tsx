@@ -18,14 +18,14 @@ const difficultyConfig = {
 };
 
 const competencyColors: Record<string, string> = {
-  leadership: "bg-purple-100 text-purple-700",
-  teamwork: "bg-blue-100 text-blue-700",
-  problem_solving: "bg-green-100 text-green-700",
-  adaptability: "bg-yellow-100 text-yellow-700",
-  communication: "bg-pink-100 text-pink-700",
-  ownership: "bg-indigo-100 text-indigo-700",
+  leadership: "bg-warning-50 text-warning-700",
+  teamwork: "bg-info-50 text-info-700",
+  problem_solving: "bg-success-50 text-success-700",
+  adaptability: "bg-warning-50 text-warning-700",
+  communication: "bg-primary-50 text-primary-600",
+  ownership: "bg-info-50 text-info-700",
   conflict_resolution: "bg-red-100 text-red-700",
-  growth_mindset: "bg-teal-100 text-teal-700",
+  growth_mindset: "bg-success-50 text-success-700",
 };
 
 export default function BehavioralBank() {
@@ -247,7 +247,7 @@ export default function BehavioralBank() {
             </Card>
           ) : generating ? (
             <Card className="text-center py-12">
-              <img src="/images/resume-scan.gif" className="w-64 mx-auto" alt="Processing" />
+              <img src="/images/resume-scan.gif" className="w-64 mx-auto" alt="" aria-hidden="true" />
               <p className="mt-4 text-sm text-gray-500 animate-pulse">
                 Generating STAR framework questions for your target role...
               </p>

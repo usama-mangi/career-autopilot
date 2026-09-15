@@ -243,7 +243,7 @@ export default function ResignationLetter() {
         </Card>
       ) : generating ? (
         <Card className="text-center py-12">
-          <img src="/images/resume-scan.gif" className="w-64 mx-auto" alt="Processing" />
+          <img src="/images/resume-scan.gif" className="w-64 mx-auto" alt="" aria-hidden="true" />
           <p className="mt-4 text-sm text-gray-500 animate-pulse">
             Crafting a professional resignation letter with smooth transition plan...
           </p>
@@ -271,14 +271,14 @@ export default function ResignationLetter() {
             {letter.content}
           </Card>
 
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-6 border border-blue-100">
+          <div className="bg-[#FFF8F0] rounded-2xl p-6 border border-[#E8DDD1]">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Next Steps</h3>
             <ul className="space-y-2 text-sm text-gray-700">
-              <li className="flex items-start gap-2"><span className="text-green-500 mt-0.5">✓</span> Review the letter for accuracy and personal touches</li>
-              <li className="flex items-start gap-2"><span className="text-green-500 mt-0.5">✓</span> Schedule a meeting with your manager to deliver the news in person</li>
-              <li className="flex items-start gap-2"><span className="text-green-500 mt-0.5">✓</span> Prepare your transition plan document for handover</li>
-              <li className="flex items-start gap-2"><span className="text-green-500 mt-0.5">✓</span> Request an exit interview if desired</li>
-              <li className="flex items-start gap-2"><span className="text-green-500 mt-0.5">✓</span> Update LinkedIn and notify your network after departure</li>
+              <li className="flex items-start gap-2"><span className="text-success mt-0.5" aria-hidden="true">✓</span> Review the letter for accuracy and personal touches</li>
+              <li className="flex items-start gap-2"><span className="text-success mt-0.5" aria-hidden="true">✓</span> Schedule a meeting with your manager to deliver the news in person</li>
+              <li className="flex items-start gap-2"><span className="text-success mt-0.5" aria-hidden="true">✓</span> Prepare your transition plan document for handover</li>
+              <li className="flex items-start gap-2"><span className="text-success mt-0.5" aria-hidden="true">✓</span> Request an exit interview if desired</li>
+              <li className="flex items-start gap-2"><span className="text-success mt-0.5" aria-hidden="true">✓</span> Update LinkedIn and notify your network after departure</li>
             </ul>
           </div>
 
