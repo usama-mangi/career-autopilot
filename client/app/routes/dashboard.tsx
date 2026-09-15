@@ -230,10 +230,10 @@ export default function Dashboard() {
             { label: "Total Jobs", count: counts.total, to: "/applications" },
           ].map((s) => (
             <Link key={s.label} to={s.to} className="block">
-              <Card className="p-4 hover:shadow-md transition-shadow">
+              <div className="p-4 hover:bg-[#FFF8F0] rounded-xl transition-colors">
                 <p className="text-xs text-gray-500 mb-1">{s.label}</p>
                 <p className="text-2xl font-bold text-gray-900">{s.count}</p>
-              </Card>
+              </div>
             </Link>
           ))}
         </div>

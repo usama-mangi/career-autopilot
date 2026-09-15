@@ -426,12 +426,13 @@ export default function Resume() {
           </div>
         </div>
 
-        {/* Right Sidebar */}
+        {/* Right Sidebar — one panel, sections separated by hairlines */}
         <aside className="lg:col-span-3 space-y-4">
+          <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100">
           {/* ATS Analysis */}
           {feedback && (
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">ATS Analysis</h3>
+            <div className="p-5">
+              <h3 className="text-sm font-semibold text-gray-900 mb-4">ATS analysis</h3>
               <div className="space-y-3">
                 <CategoryScore label="Overall" score={feedback.overallScore} showBar={false} />
                 <CategoryScore label="Keywords" score={feedback.keywordMatchScore ?? 0} showBar={false} />
@@ -441,8 +442,8 @@ export default function Resume() {
           )}
 
           {/* Resume Info */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Resume Info</h3>
+          <div className="p-5">
+            <h3 className="text-sm font-semibold text-gray-900 mb-4">Resume info</h3>
             <dl className="space-y-3 text-sm">
               <div>
                 <dt className="text-gray-500 mb-0.5">Target Role</dt>
@@ -469,8 +470,8 @@ export default function Resume() {
 
           {/* Original File */}
           {resumeUrl && (
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Original File</h3>
+            <div className="p-5">
+              <h3 className="text-sm font-semibold text-gray-900 mb-3">Original file</h3>
               <a
                 href={resumeUrl}
                 target="_blank"
@@ -488,8 +489,8 @@ export default function Resume() {
 
           {/* Shared Feedback */}
           {(resume.sharedFeedbacks ?? []).length > 0 && (
-            <div className="bg-white rounded-xl border border-gray-200 p-5">
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+            <div className="p-5">
+              <h3 className="text-sm font-semibold text-gray-900 mb-3">
                 Feedback ({(resume.sharedFeedbacks ?? []).length})
               </h3>
               <div className="space-y-2">
@@ -527,6 +528,7 @@ export default function Resume() {
               )}
             </div>
           )}
+          </div>
         </aside>
       </div>
 
@@ -543,7 +545,7 @@ export default function Resume() {
 
           {feedback.strengths && feedback.strengths.length > 0 && (
             <div className="mb-6">
-              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">Strengths</h3>
+              <h3 className="text-sm font-semibold text-gray-900 mb-3">Strengths</h3>
               <ul className="space-y-2">
                 {(feedback.strengths ?? []).map((s: string, i: number) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
@@ -559,7 +561,7 @@ export default function Resume() {
 
           {feedback.weaknesses && feedback.weaknesses.length > 0 && (
             <div className="mb-6">
-              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">Areas to Improve</h3>
+              <h3 className="text-sm font-semibold text-gray-900 mb-3">Areas to improve</h3>
               <ul className="space-y-2">
                 {(feedback.weaknesses ?? []).map((w: string, i: number) => (
                   <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
@@ -575,7 +577,7 @@ export default function Resume() {
 
           {feedback.suggestions && feedback.suggestions.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-3">Suggestions</h3>
+              <h3 className="text-sm font-semibold text-gray-900 mb-3">Suggestions</h3>
               <ul className="space-y-3">
                 {(feedback.suggestions ?? []).map((s: string, i: number) => (
                   <li key={i} className="p-4 bg-gray-50 rounded-lg">

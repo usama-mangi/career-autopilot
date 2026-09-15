@@ -263,13 +263,6 @@ export default function JobsPage() {
     <PageShell maxWidth="full" padding="lg">
       {/* Hero search area */}
       <div className="bg-[#FFF8F0] border border-[#E8DDD1] rounded-2xl p-6 sm:p-8 mb-8 shadow-sm">
-        <div className="flex items-center gap-2 mb-3">
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary-500" />
-          </span>
-          <span className="text-xs font-semibold text-primary-600 uppercase tracking-wider">Live search</span>
-        </div>
         <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight mb-2">
           Scout your next role
         </h1>
@@ -458,7 +451,7 @@ export default function JobsPage() {
             ) : bookmarkedJobs.length > 0 ? (
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider">
+                  <h3 className="text-sm font-semibold text-gray-900">
                     Bookmarked Jobs
                   </h3>
                   <Button
@@ -883,7 +876,7 @@ function FilterGroup({
 }) {
   return (
     <div>
-      <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2.5">
+      <p className="text-sm font-medium text-gray-700 mb-2.5">
         {title}
       </p>
       <div className="flex flex-wrap gap-1.5">

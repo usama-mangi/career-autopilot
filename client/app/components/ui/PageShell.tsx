@@ -68,8 +68,7 @@ interface SectionHeaderProps {
 export function SectionHeader({ title, subtitle, action, className }: SectionHeaderProps) {
   return (
     <div className={cn("mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3", className)}>
-      <div>
-        <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{title}</h2>
+      <div>          <h2 className="text-xs font-semibold text-gray-500">{title}</h2>
         {subtitle && <p className="mt-0.5 text-sm text-gray-500">{subtitle}</p>}
       </div>
       {action && <div className="flex-shrink-0">{action}</div>}

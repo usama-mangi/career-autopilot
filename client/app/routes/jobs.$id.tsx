@@ -210,8 +210,7 @@ export default function JobDetailPage() {
       {/* Hero */}
       <div className="bg-[#FFF8F0] border border-[#E8DDD1] rounded-2xl p-6 sm:p-8 mb-8 shadow-sm">
         <div className="flex items-center gap-3 mb-4 flex-wrap">
-          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${sourceStyle.bg} ${sourceStyle.text}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${sourceStyle.dot}`} />
+          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${sourceStyle.bg} ${sourceStyle.text}`}>
             {job.source}
           </span>
           {job.isBookmarked && <span className="text-amber-400 text-lg">★</span>}
@@ -232,58 +231,59 @@ export default function JobDetailPage() {
       <div className="grid gap-8 lg:grid-cols-3">
         {/* Main content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Key details */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {/* Key details — one fact sheet, not seven boxes */}
+          <dl className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-3">
             {job.location && (
-              <div className="bg-white rounded-xl border border-[#E8DDD1] p-4 shadow-sm">
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Location</p>
-                <p className="text-sm font-semibold text-gray-900">{job.location}</p>
+              <div>
+                <dt className="text-xs text-gray-500">Location</dt>
+                <dd className="text-sm font-semibold text-gray-900">{job.location}</dd>
               </div>
             )}
             {job.jobType && (
-              <div className="bg-white rounded-xl border border-[#E8DDD1] p-4 shadow-sm">
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Type</p>
-                <p className="text-sm font-semibold text-gray-900 capitalize">{job.jobType}</p>
+              <div>
+                <dt className="text-xs text-gray-500">Type</dt>
+                <dd className="text-sm font-semibold text-gray-900 capitalize">{job.jobType}</dd>
               </div>
             )}
             {(job.workArrangement || job.remoteType) && (
-              <div className="bg-white rounded-xl border border-[#E8DDD1] p-4 shadow-sm">
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Work Style</p>
-                <p className="text-sm font-semibold text-gray-900 capitalize">{job.workArrangement || job.remoteType}</p>
+              <div>
+                <dt className="text-xs text-gray-500">Work style</dt>
+                <dd className="text-sm font-semibold text-gray-900 capitalize">{job.workArrangement || job.remoteType}</dd>
               </div>
             )}
             {job.seniorityLevel && (
-              <div className="bg-white rounded-xl border border-[#E8DDD1] p-4 shadow-sm">
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Seniority</p>
-                <p className="text-sm font-semibold text-gray-900 capitalize">{job.seniorityLevel}</p>
+              <div>
+                <dt className="text-xs text-gray-500">Seniority</dt>
+                <dd className="text-sm font-semibold text-gray-900 capitalize">{job.seniorityLevel}</dd>
               </div>
             )}
             {job.salaryMin && (
-              <div className="bg-white rounded-xl border border-[#E8DDD1] p-4 shadow-sm">
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Salary</p>
-                <p className="text-sm font-bold text-success">
+              <div>
+                <dt className="text-xs text-gray-500">Salary</dt>
+                <dd className="text-sm font-bold text-success">
                   ${job.salaryMin.toLocaleString()}–${job.salaryMax?.toLocaleString() || "N/A"}
-                </p>
+                </dd>
               </div>
             )}
             {job.requiredExperienceYears != null && (
-              <div className="bg-white rounded-xl border border-[#E8DDD1] p-4 shadow-sm">
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Experience</p>
-                <p className="text-sm font-semibold text-gray-900">{job.requiredExperienceYears}+ years</p>
+              <div>
+                <dt className="text-xs text-gray-500">Experience</dt>
+                <dd className="text-sm font-semibold text-gray-900">{job.requiredExperienceYears}+ years</dd>
               </div>
             )}
             {job.jobFunction && (
-              <div className="bg-white rounded-xl border border-[#E8DDD1] p-4 shadow-sm">
-                <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Function</p>
-                <p className="text-sm font-semibold text-gray-900 capitalize">{job.jobFunction}</p>
+              <div>
+                <dt className="text-xs text-gray-500">Function</dt>
+                <dd className="text-sm font-semibold text-gray-900 capitalize">{job.jobFunction}</dd>
               </div>
             )}
-          </div>
+          </dl>
 
           {/* Skill Match Overview */}
           {skillMatch && skillMatch.percentage > 0 && (
-            <div className="bg-white rounded-xl border border-[#E8DDD1] p-6 shadow-sm">
-              <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4">Skill Match Overview</h2>
+            <div className="bg-white rounded-xl border border-[#E8DDD1] shadow-sm">
+              <div className="p-6 space-y-6">
+                <h2 className="text-base font-semibold text-gray-900">Skill match</h2>
               <div className="flex items-center gap-4 mb-4">
                 <ScoreBadge score={skillMatch.percentage} size="lg" matchedSkills={skillMatch.matchedSkills} missingSkills={skillMatch.missingSkills} />
                 <div>
@@ -293,7 +293,7 @@ export default function JobDetailPage() {
               </div>
               {skillMatch.matchedSkills.length > 0 && (
                 <div className="mb-3">
-                  <p className="text-[11px] font-bold text-success uppercase tracking-wider mb-2">Matched Skills</p>
+                  <p className="text-xs font-medium text-gray-500 mb-2">Matched skills</p>
                   <div className="flex flex-wrap gap-1.5">
                     {skillMatch.matchedSkills.map((s) => (
                       <span key={s} className="px-2.5 py-0.5 bg-success-50 text-success rounded-full text-xs font-semibold">{s}</span>
@@ -303,7 +303,7 @@ export default function JobDetailPage() {
               )}
               {skillMatch.missingSkills.length > 0 && (
                 <div>
-                  <p className="text-[11px] font-bold text-warning uppercase tracking-wider mb-2">Missing Skills</p>
+                  <p className="text-xs font-medium text-gray-500 mb-2">Missing skills</p>
                   <div className="flex flex-wrap gap-1.5">
                     {skillMatch.missingSkills.map((s) => (
                       <span key={s} className="px-2.5 py-0.5 bg-warning-50 text-warning rounded-full text-xs font-semibold">{s}</span>
@@ -311,61 +311,64 @@ export default function JobDetailPage() {
                   </div>
                 </div>
               )}
-            </div>
-          )}
-
-          {/* Required Technologies */}
-          {job.requiredTechnologies?.length > 0 && (
-            <div className="bg-white rounded-xl border border-[#E8DDD1] p-6 shadow-sm">
-              <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4">Required Technologies</h2>
-              <div className="flex flex-wrap gap-1.5">
-                {job.requiredTechnologies.map((tech: string) => (
-                  <span key={tech} className="px-2.5 py-1 bg-success-50 text-success rounded-full text-xs font-semibold">{tech}</span>
-                ))}
               </div>
             </div>
           )}
 
+          {/* Posting content — one document: chip sections separated by hairlines */}
+          {(job.requiredTechnologies?.length > 0 || job.preferredTechnologies?.length > 0 || job.softSkills?.length > 0 || job.benefitsExtended?.length > 0 || job.description || job.requirements) && (
+            <div className="bg-white rounded-xl border border-[#E8DDD1] shadow-sm divide-y divide-[#E8DDD1]">
+              {job.requiredTechnologies?.length > 0 && (
+                <section className="p-6">
+                  <h2 className="text-base font-semibold text-gray-900 mb-4">Required technologies</h2>
+                  <div className="flex flex-wrap gap-1.5">
+                    {job.requiredTechnologies.map((tech: string) => (
+                      <span key={tech} className="px-2.5 py-1 bg-success-50 text-success rounded-full text-xs font-semibold">{tech}</span>
+                    ))}
+                  </div>
+                </section>
+              )}
+
           {/* Preferred Technologies */}
           {job.preferredTechnologies?.length > 0 && (
-            <div className="bg-white rounded-xl border border-[#E8DDD1] p-6 shadow-sm">
-              <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4">Preferred Technologies</h2>
+            <section className="p-6">
+              <h2 className="text-base font-semibold text-gray-900 mb-4">Preferred technologies</h2>
               <div className="flex flex-wrap gap-1.5">
                 {job.preferredTechnologies.map((tech: string) => (
                   <span key={tech} className="px-2.5 py-1 bg-info-50 text-info rounded-full text-xs font-semibold">{tech}</span>
                 ))}
               </div>
-            </div>
+            </section>
           )}
 
           {/* Soft Skills */}
           {job.softSkills?.length > 0 && (
-            <div className="bg-white rounded-xl border border-[#E8DDD1] p-6 shadow-sm">
-              <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4">Soft Skills</h2>
+            <section className="p-6">
+              <h2 className="text-base font-semibold text-gray-900 mb-4">Soft skills</h2>
               <div className="flex flex-wrap gap-1.5">
                 {job.softSkills.map((skill: string) => (
                   <span key={skill} className="px-2.5 py-1 bg-[#F5EDE4] text-gray-700 rounded-full text-xs font-semibold">{skill}</span>
                 ))}
               </div>
-            </div>
+            </section>
           )}
 
           {/* Benefits */}
           {job.benefitsExtended?.length > 0 && (
-            <div className="bg-white rounded-xl border border-[#E8DDD1] p-6 shadow-sm">
-              <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4">Benefits</h2>
+            <section className="p-6">
+              <h2 className="text-base font-semibold text-gray-900 mb-4">Benefits</h2>
               <div className="flex flex-wrap gap-1.5">
                 {job.benefitsExtended.map((benefit: string) => (
                   <span key={benefit} className="px-2.5 py-1 bg-warning-50 text-warning rounded-full text-xs font-semibold">{benefit}</span>
                 ))}
               </div>
-            </div>
+            </section>
           )}
 
           {/* Additional Info */}
           {(job.educationRequired || job.visaSponsorship != null || job.relocationRequired != null || job.relocationAssistance != null || job.hasManagementResponsibilities != null || job.aiMlInvolved != null || job.industry || job.contractDuration || job.startDate) && (
-            <div className="bg-white rounded-xl border border-[#E8DDD1] p-6 shadow-sm">
-              <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4">Additional Information</h2>
+            <section className="p-6">
+              <h2 className="text-base font-semibold text-gray-900 mb-4">Additional information</h2>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 {job.educationRequired && (
                   <div><span className="text-gray-500">Education:</span> <span className="font-semibold text-gray-900">{job.educationRequired}</span></div>
@@ -395,22 +398,24 @@ export default function JobDetailPage() {
                   <div><span className="text-gray-500">AI/ML Involved:</span> <span className="font-semibold text-gray-900">{job.aiMlInvolved ? 'Yes' : 'No'}</span></div>
                 )}
               </div>
-            </div>
+            </section>
           )}
 
           {/* Description */}
           {job.description && (
-            <div className="bg-white rounded-xl border border-[#E8DDD1] p-6 shadow-sm">
-              <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4">Description</h2>
+            <section className="p-6">
+              <h2 className="text-base font-semibold text-gray-900 mb-4">Description</h2>
               <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{job.description}</div>
-            </div>
+            </section>
           )}
 
           {/* Requirements */}
           {job.requirements && (
-            <div className="bg-white rounded-xl border border-[#E8DDD1] p-6 shadow-sm">
-              <h2 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4">Requirements</h2>
+            <section className="p-6">
+              <h2 className="text-base font-semibold text-gray-900 mb-4">Requirements</h2>
               <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{job.requirements}</div>
+            </section>
+          )}
             </div>
           )}
         </div>
@@ -493,10 +498,10 @@ export default function JobDetailPage() {
             )}
           </div>
 
-          {/* Tags */}
+          {/* Tags — quiet inline group, no box for four words */}
           {job.tags?.length > 0 && (
-            <div className="bg-white rounded-xl border border-[#E8DDD1] p-6 shadow-sm">
-              <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">Tags</p>
+            <div>
+              <p className="text-xs font-medium text-gray-500 mb-3">Tags</p>
               <div className="flex flex-wrap gap-1.5">
                 {job.tags.map((tag: string) => (
                   <span key={tag} className="px-2.5 py-1 bg-[#F5EDE4] text-gray-700 rounded-full text-xs font-semibold">{tag}</span>

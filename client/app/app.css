@@ -148,30 +148,9 @@ label {
   }
 
   .section-title {
-    /* gray-500, not gray-400: labels carry meaning, so they need AA contrast */
-    @apply text-xs font-semibold text-gray-500 uppercase tracking-wider;
-  }
-
-  /* Stat card — field notes style */
-  .stat-card {
-    @apply bg-white rounded-xl border border-[#E8DDD1] p-4 shadow-sm hover:shadow-md transition-shadow flex items-center gap-3;
-  }
-
-  .stat-card-icon {
-    @apply size-10 rounded-lg bg-[#FFF8F0] flex items-center justify-center shrink-0;
-  }
-
-  .stat-card-value {
-    @apply text-xl font-bold text-gray-900;
-  }
-
-  .stat-card-label {
-    @apply text-xs text-gray-600;
-  }
-
-  /* Cards — warm paper feel */
-  .card {
-    @apply bg-white rounded-xl border border-[#E8DDD1] shadow-sm;
+    /* Normal-case quiet label. Uppercase eyebrow styling is a slop pattern —
+       labels carry meaning, they don't need costume. */
+    @apply text-xs font-semibold text-gray-500;
   }
 
   /* Primary button — terracotta, warm */

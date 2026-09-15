@@ -228,7 +228,7 @@ export default function InterviewQuestions() {
                     {isExpanded && (
                       <div className="px-5 pb-5 pt-0 border-t border-gray-100">
                         <div className="mt-4">
-                          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Talking points</h4>
+                          <h4 className="text-sm font-semibold text-gray-900 mb-2">Talking points</h4>
                           <ul className="space-y-1.5">
                             {q.talkingPoints.map((point, j) => (
                               <li key={j} className="text-sm text-gray-700 flex items-start gap-2"><span className="text-info mt-0.5 flex-shrink-0" aria-hidden="true">•</span>{point}</li>
@@ -236,7 +236,7 @@ export default function InterviewQuestions() {
                           </ul>
                         </div>
                         <div className="mt-4">
-                          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">What the interviewer is looking for</h4>
+                          <h4 className="text-sm font-semibold text-gray-900 mb-2">What the interviewer is looking for</h4>
                           <p className="text-sm text-gray-700 leading-relaxed">{q.whatInterviewerLooksFor}</p>
                         </div>
                       </div>

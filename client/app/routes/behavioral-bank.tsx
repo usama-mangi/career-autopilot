@@ -343,27 +343,27 @@ export default function BehavioralBank() {
                         {isSTARVisible && (
                           <div className="px-5 pb-5 pt-0 border-t border-gray-100 space-y-3">
                             <div>
-                              <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                              <p className="text-xs font-medium text-gray-500 mb-1">
                                 Situation
-                              </h5>
+                              </p>
                               <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">
                                 {q.star?.situation || "Describe the context and background of the situation..."}
                               </p>
                             </div>
                             <div>
-                              <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Task</h5>
+                              <p className="text-xs font-medium text-gray-500 mb-1">Task</p>
                               <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">
                                 {q.star?.task || "What was your responsibility or goal?"}
                               </p>
                             </div>
                             <div>
-                              <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Action</h5>
+                              <p className="text-xs font-medium text-gray-500 mb-1">Action</p>
                               <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">
                                 {q.star?.action || "What specific steps did YOU take?"}
                               </p>
                             </div>
                             <div>
-                              <h5 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Result</h5>
+                              <p className="text-xs font-medium text-gray-500 mb-1">Result</p>
                               <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">
                                 {q.star?.result || "What was the outcome? Quantify if possible."}
                               </p>

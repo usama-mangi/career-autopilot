@@ -100,7 +100,7 @@ export function ScoreBadge({ score, size = "md", showLabel = true, variant = "de
 
           {matchedSkills && matchedSkills.length > 0 && (
             <div className="mb-3">
-              <p className="text-[10px] font-semibold text-[#065F46] uppercase tracking-wider mb-1.5">Matched Skills</p>
+              <p className="text-[11px] font-medium text-gray-500 mb-1.5">Matched skills</p>
               <div className="flex flex-wrap gap-1">
                 {matchedSkills.map((s) => (
                   <span key={s} className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#ECFDF5] text-[#065F46] rounded-full text-[10px] font-medium border border-[#D1FAE5]">
@@ -116,7 +116,7 @@ export function ScoreBadge({ score, size = "md", showLabel = true, variant = "de
 
           {missingSkills && missingSkills.length > 0 && (
             <div>
-              <p className="text-[10px] font-semibold text-[#B91C1C] uppercase tracking-wider mb-1.5">Missing Skills</p>
+              <p className="text-[11px] font-medium text-gray-500 mb-1.5">Missing skills</p>
               <div className="flex flex-wrap gap-1">
                 {missingSkills.map((s) => (
                   <span key={s} className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#FEF2F2] text-[#B91C1C] rounded-full text-[10px] font-medium border border-[#FEE2E2]">

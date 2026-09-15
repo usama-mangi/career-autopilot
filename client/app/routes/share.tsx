@@ -92,7 +92,7 @@ export default function Share() {
           {/* ATS Score Summary */}
           {feedback && (
             <div className="bg-white rounded-xl border border-gray-200 p-6">
-              <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">ATS Analysis</h2>
+              <h2 className="text-sm font-semibold text-gray-900 mb-4">ATS analysis</h2>
               <div className="grid grid-cols-3 gap-4">
                 <CategoryScore label="Overall" score={feedback.overallScore} showBar={false} />
                 <CategoryScore label="Keywords" score={feedback.keywordMatchScore ?? 0} showBar={false} />

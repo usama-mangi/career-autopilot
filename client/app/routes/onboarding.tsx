@@ -512,8 +512,7 @@ export default function OnboardingPage() {
                 </div>
               )}
 
-              <div>
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Suggested Skills</p>
+              <div>                 <p className="text-xs font-medium text-gray-500 mb-2">Suggested skills</p>
                 <div className="flex flex-wrap gap-1.5">
                   {SUGGESTED_SKILLS.filter(s => !skills.includes(s)).slice(0, 20).map(s => (
                     <button

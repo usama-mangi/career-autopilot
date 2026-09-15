@@ -26,7 +26,7 @@ function EmptyList({ title, children }: { title: string; children: React.ReactNo
   const hasContent = Array.isArray(children) && children.length > 0;
   return (
     <div>
-      <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{title}</h4>
+      <h4 className="text-sm font-semibold text-gray-900 mb-2">{title}</h4>
       {hasContent ? (
         <div className="space-y-2">{children}</div>
       ) : (
@@ -64,7 +64,7 @@ export function First90PlanView({ tracker }: { tracker: First90DaysTracker }) {
               </div>
               <div className="grid gap-4 sm:grid-cols-3 text-sm">
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Goals</p>
+                  <p className="text-xs font-medium text-gray-500 mb-1.5">Goals</p>
                   <ul className="space-y-1">
                     {(phase.goals || []).map((g, gi) => (
                       <li key={gi} className="text-gray-700 flex items-start gap-1.5">
@@ -74,7 +74,7 @@ export function First90PlanView({ tracker }: { tracker: First90DaysTracker }) {
                   </ul>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Deliverables</p>
+                  <p className="text-xs font-medium text-gray-500 mb-1.5">Deliverables</p>
                   <ul className="space-y-1">
                     {(phase.deliverables || []).map((d, di) => (
                       <li key={di} className="text-gray-700 flex items-start gap-1.5">
@@ -84,7 +84,7 @@ export function First90PlanView({ tracker }: { tracker: First90DaysTracker }) {
                   </ul>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Success Criteria</p>
+                  <p className="text-xs font-medium text-gray-500 mb-1.5">Success criteria</p>
                   <ul className="space-y-1">
                     {(phase.successCriteria || []).map((s, si) => (
                       <li key={si} className="text-gray-700 flex items-start gap-1.5">

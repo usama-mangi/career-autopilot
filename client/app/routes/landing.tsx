@@ -165,7 +165,7 @@ export default function Landing() {
                       </svg>
                     </div>
                     <div>
-                      <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Camp {camp.phase}</span>
+                      <span className="text-xs font-medium text-primary-600">{camp.phase}</span>
                       <h3 className="text-sm font-semibold text-gray-900">{camp.label}</h3>
                     </div>
                   </div>

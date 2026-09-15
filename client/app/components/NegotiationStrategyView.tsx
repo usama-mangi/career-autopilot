@@ -47,7 +47,7 @@ export function NegotiationStrategyView({ coach }: { coach: NegotiationCoach }) 
 
       {strategy && (
         <div>
-          <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Negotiation Strategy</h4>
+          <h3 className="text-sm font-semibold text-gray-900 mb-2">Negotiation strategy</h3>
           <Card padding="md">
             {strategy.overallApproach && <p className="text-sm text-gray-700 mb-3">{strategy.overallApproach}</p>}
             <div className="grid grid-cols-3 gap-3 mb-4">
@@ -99,7 +99,7 @@ export function NegotiationStrategyView({ coach }: { coach: NegotiationCoach }) 
 
       {emailTemplates.length > 0 && (
         <div>
-          <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Email Templates</h4>
+          <h3 className="text-sm font-semibold text-gray-900 mb-2">Email templates</h3>
           <div className="space-y-3">
             {emailTemplates.map((tpl, i) => (
               <Card key={i} padding="md">
@@ -120,7 +120,7 @@ export function NegotiationStrategyView({ coach }: { coach: NegotiationCoach }) 
 
       {scripts.length > 0 && (
         <div>
-          <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Conversation Scripts</h4>
+          <h3 className="text-sm font-semibold text-gray-900 mb-2">Conversation scripts</h3>
           <div className="space-y-3">
             {scripts.map((script, i) => (
               <Card key={i} padding="md">
@@ -136,7 +136,7 @@ export function NegotiationStrategyView({ coach }: { coach: NegotiationCoach }) 
                 {script.closing && <p className="text-sm text-gray-600 italic">Closing: "{script.closing}"</p>}
                 {script.handlingObjections && script.handlingObjections.length > 0 && (
                   <div className="mt-2">
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Handling Objections</p>
+                    <p className="text-xs font-medium text-gray-500 mb-1">Handling objections</p>
                     <ul className="space-y-1">
                       {script.handlingObjections.map((obj, oi) => (
                         <li key={oi} className="text-sm text-gray-600">• {obj}</li>

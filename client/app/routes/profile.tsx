@@ -168,7 +168,7 @@ export default function ProfilePage() {
 
           {/* Section checklist */}
           <Card className="p-4">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Sections</p>
+            <p className="text-sm font-semibold text-gray-900 mb-3">Sections</p>
             <div className="space-y-2">
               {completion?.sections?.map((section: any) => (
                 <div key={section.name} className="flex items-center justify-between text-sm">

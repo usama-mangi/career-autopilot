@@ -192,7 +192,7 @@ function StageToolkit({ appId, companyName, roleTitle, status, artifacts }: Stag
 
   return (
     <div className="mt-4 rounded-xl border border-[#E8DDD1] bg-[#FFFBF5] p-4">
-      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+      <p className="text-sm font-semibold text-gray-900 mb-3">
         {status === "accepted"
           ? "Offer toolkit"
           : status === "offer"
@@ -201,11 +201,11 @@ function StageToolkit({ appId, companyName, roleTitle, status, artifacts }: Stag
               ? "Interview toolkit"
               : "Prepare for this application"}
       </p>
-      <div className={rows.length > 2 ? "grid gap-3 sm:grid-cols-3" : "grid gap-3 sm:grid-cols-2"}>
+      <div className={rows.length > 2 ? "grid gap-4 sm:grid-cols-3" : "grid gap-4 sm:grid-cols-2"}>
         {rows.map((row) => {
           const hasItems = row.items.length > 0;
           return (
-            <div key={row.key} className="rounded-lg border border-[#E8DDD1] bg-white p-3">
+            <div key={row.key} className="border-l-2 border-[#E8DDD1] pl-3">
               <div className="flex items-center gap-2 mb-1">
                 <ToolkitIcon name={row.icon} />
                 <p className="text-sm font-medium text-gray-900">{row.label}</p>
