@@ -171,7 +171,9 @@ export default function OnboardingPage() {
       await api.profile.update({ education, experience, projects, skills });
       await api.profile.completeOnboarding();
       toastSuccess("Profile complete", "Welcome to Career Autopilot!");
-      navigate("/");
+      // Landing on the public marketing page after onboarding would read as a
+      // logout; the authenticated app lives at /dashboard.
+      navigate("/dashboard");
     } catch (err) {
       reportError(err, { title: "Save failed", toastError, retry: handleFinish });
     }

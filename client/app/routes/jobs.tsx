@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { useJobsStore } from "~/lib/jobs-store";
@@ -85,6 +85,18 @@ export default function JobsPage() {
   useEffect(() => {
     if (!isPending && !isAuthenticated) navigate("/login");
   }, [isPending, isAuthenticated]);
+
+  // Deep link: the Companies pages link to /jobs?company=<name> expecting a
+  // filtered result. The search API has no company facet, so pre-fill the
+  // keyword search with the company name and run it.
+  const [searchParams] = useSearchParams();
+  const companyParam = searchParams.get("company");
+  useEffect(() => {
+    if (!isAuthenticated || !companyParam) return;
+    store.setSearchKeywords(companyParam);
+    store.search();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, companyParam]);
 
   useEffect(() => {
     return () => {

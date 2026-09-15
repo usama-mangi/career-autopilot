@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
-import type { Resume, ResumeVersion } from "types";
+import type { Resume, ResumeVersion, ResumeVersionUpdateRequest } from "types";
 import { useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
 
 export const meta = () => [
@@ -25,6 +25,9 @@ export default function ResumeVersions() {
   const [versions, setVersions] = useState<ResumeVersion[]>([]);
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [editingVersion, setEditingVersion] = useState<ResumeVersion | null>(null);
+  const [savingVersion, setSavingVersion] = useState(false);
+  const [editForm, setEditForm] = useState({ name: "", roleType: "" });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -129,6 +132,39 @@ export default function ResumeVersions() {
         setError,
       });
     }
+  }
+
+  function openEditVersion(version: ResumeVersion) {
+    setEditingVersion(version);
+    setEditForm({ name: version.name, roleType: version.roleType || "" });
+    setError("");
+  }
+
+  async function handleSaveEdit(e?: React.FormEvent) {
+    e?.preventDefault();
+    if (!editingVersion) return;
+    if (!editForm.name.trim()) return;
+    setSavingVersion(true);
+    setError("");
+    try {
+      const body: ResumeVersionUpdateRequest = {
+        name: editForm.name.trim(),
+        roleType: editForm.roleType || undefined,
+      };
+      const updated = await api.resumes.updateResumeVersion(editingVersion.id, body);
+      setVersions((prev) => prev.map((v) => (v.id === updated.id ? updated : v)));
+      setEditingVersion(null);
+      setSuccess("Version updated!");
+      setTimeout(() => setSuccess(""), 2000);
+    } catch (err) {
+      reportError(err, {
+        title: "Failed to update version",
+        toastError,
+        setError,
+        retry: handleSaveEdit,
+      });
+    }
+    setSavingVersion(false);
   }
 
   async function handleDelete(versionId: string) {
@@ -302,6 +338,59 @@ export default function ResumeVersions() {
               </div>
             )}
 
+            {/* Edit Version Modal — in-page so the user never loses list context */}
+            {editingVersion && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+                <div className="bg-white rounded-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+                  <h3 className="text-xl font-semibold text-gray-900 mb-4">Edit Resume Version</h3>
+                  <form onSubmit={handleSaveEdit} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Version Name *</label>
+                      <input
+                        type="text"
+                        value={editForm.name}
+                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                        placeholder="e.g., Senior Backend Engineer"
+                        className=""
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Role Type</label>
+                      <select
+                        value={editForm.roleType}
+                        onChange={(e) => setEditForm({ ...editForm, roleType: e.target.value })}
+                        className=""
+                      >
+                        <option value="">Select role type</option>
+                        {roleTypes.map((r) => (
+                          <option key={r.value} value={r.value}>
+                            {r.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex gap-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => setEditingVersion(null)}
+                        className="flex-1 px-4 py-2 bg-white border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={savingVersion}
+                        className="flex-1 px-4 py-2 primary-button disabled:opacity-50"
+                      >
+                        {savingVersion ? "Saving..." : "Save Changes"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+
             {/* Versions List */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
               {versions.length === 0 ? (
@@ -360,7 +449,7 @@ export default function ResumeVersions() {
                             </button>
                           )}
                           <button
-                            onClick={() => navigate(`/resume-versions/${id}/edit/${version.id}`)}
+                            onClick={() => openEditVersion(version)}
                             className="px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                           >
                             Edit

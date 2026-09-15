@@ -919,7 +919,7 @@ export class ResumesService {
   async updateResumeVersion(
     versionId: string,
     userId: string,
-    body: { name?: string; description?: string; content?: any; isPrimary?: boolean },
+    body: { name?: string; roleType?: string; description?: string; content?: any; isPrimary?: boolean },
   ) {
     const version = await this.prisma.resumeVersion.findUnique({
       where: { id: versionId },
@@ -938,7 +938,10 @@ export class ResumesService {
 
     const updateData: any = {};
     if (body.name !== undefined) updateData.name = body.name;
-    if (body.description !== undefined) updateData.roleType = body.description;
+    // The client sends roleType (ResumeVersionUpdateRequest); `description`
+    // is kept as a legacy alias so older callers keep working.
+    const roleType = body.roleType ?? body.description;
+    if (roleType !== undefined) updateData.roleType = roleType;
     if (body.content !== undefined) updateData.content = body.content;
     if (body.isPrimary !== undefined) updateData.isPrimary = body.isPrimary;
 

@@ -451,7 +451,7 @@ export default function JobDetailPage() {
               )
             ) : (
               <Link
-                to={`/generate-resume?job=${encodeURIComponent(job.title)}&company=${encodeURIComponent(job.companyName)}&jobId=${job.id}`}
+                to={`/resumes/new?job=${encodeURIComponent(job.title)}&company=${encodeURIComponent(job.companyName)}&jobId=${job.id}`}
                 className="block"
               >
                 <Button className="w-full" size="lg">Generate Resume for This Job</Button>

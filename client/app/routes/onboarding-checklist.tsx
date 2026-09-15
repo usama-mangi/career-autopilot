@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { cn } from "~/lib/utils";
@@ -23,6 +23,26 @@ export default function OnboardingChecklist() {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Deep link support: ?checklist=<id> expands that checklist in place. There
+  // is no per-checklist detail route — the checklist lives on this page.
+  const [expandedId, setExpandedId] = useState<string | null>(
+    () => new URLSearchParams(window.location.search).get("checklist"),
+  );
+
+  function openChecklist(id: string) {
+    setExpandedId(id);
+    const next = new URLSearchParams(searchParams);
+    next.set("checklist", id);
+    setSearchParams(next, { replace: true });
+  }
+
+  function closeExpanded() {
+    setExpandedId(null);
+    const next = new URLSearchParams(searchParams);
+    next.delete("checklist");
+    setSearchParams(next, { replace: true });
+  }
 
   const [formData, setFormData] = useState({
     companyName: "",
@@ -98,7 +118,7 @@ export default function OnboardingChecklist() {
     return (
       <PageShell>
         <PageHeader title="Onboarding Checklist" subtitle="Loading your checklists..." />
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => <Card key={i} className="h-48 animate-pulse bg-gray-100"><div className="h-full" /></Card>)}
         </div>
       </PageShell>
@@ -131,20 +151,59 @@ export default function OnboardingChecklist() {
             const progress = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
 
             return (
-              <Card key={tracker.id} hover onClick={() => navigate(`/onboarding/checklist/${tracker.id}`)}>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{tracker.companyName}</h3>
-                    <p className="text-sm text-gray-500">{tracker.roleTitle} · Start: {new Date(tracker.startDate).toLocaleDateString()}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="h-2 w-24 bg-gray-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-primary-500 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+              <div key={tracker.id}>
+                <Card
+                  hover
+                  onClick={() => (expandedId === tracker.id ? closeExpanded() : openChecklist(tracker.id))}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{tracker.companyName}</h3>
+                      <p className="text-sm text-gray-500">{tracker.roleTitle} · Start: {new Date(tracker.startDate).toLocaleDateString()}</p>
                     </div>
-                    <span className="text-xs font-medium text-gray-500">{progress}%</span>
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 w-24 bg-gray-200 rounded-full overflow-hidden">
+                        <div className="h-full bg-primary-500 rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
+                      </div>
+                      <span className="text-xs font-medium text-gray-500">{progress}%</span>
+                    </div>
                   </div>
-                </div>
-              </Card>
+                </Card>
+                {expandedId === tracker.id && (
+                  <div className="mt-2 mb-4 p-4 bg-[#FFF8F0] border border-[#E8DDD1] rounded-xl" ref={(el) => { if (el) el.scrollIntoView({ behavior: "smooth", block: "nearest" }); }}>
+                    {tracker.categories?.length > 0 ? (
+                      <div className="space-y-4">
+                        {tracker.categories.map((cat: any) => (
+                          <div key={cat.id}>
+                            <p className="text-sm font-semibold text-gray-900 mb-2">{cat.name}</p>
+                            <ul className="space-y-1.5">
+                              {(cat.items || []).map((item: any) => (
+                                <li key={item.id} className="flex items-start gap-2 text-sm text-gray-700">
+                                  <span
+                                    aria-hidden="true"
+                                    className={`mt-0.5 inline-flex size-4 shrink-0 items-center justify-center rounded border text-[10px] font-bold ${
+                                      item.completed ? "bg-primary-500 border-primary-500 text-white" : "border-gray-300 bg-white text-transparent"
+                                    }`}
+                                  >✓</span>
+                                  <span className={item.completed ? "line-through text-gray-400" : ""}>{item.title}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">Checklist is still being generated — check back shortly.</p>
+                    )}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); closeExpanded(); }}
+                      className="mt-4 text-sm font-medium text-primary-600 hover:underline"
+                    >
+                      Hide checklist
+                    </button>
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
