@@ -78,7 +78,7 @@ export default function BatchUpload() {
       setProcessingProgress([...progress]);
 
       toastSuccess("Batch analysis complete", `${files.length} resumes processed`);
-      navigate(`/batch/${batch.id}`);
+      navigate(`/resumes/batch/${batch.id}`);
     } catch (err) {
       progress.forEach((p) => {
         p.status = "error";

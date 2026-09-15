@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, Select, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
@@ -22,6 +22,26 @@ export default function InterviewCheatSheet() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [generating, setGenerating] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Deep link support: ?sheet=<id> opens that sheet expanded in place. There is
+  // no per-sheet detail route — the sheet content renders on this page.
+  const [expandedId, setExpandedId] = useState<string | null>(
+    () => new URLSearchParams(window.location.search).get("sheet"),
+  );
+
+  function openSheet(id: string) {
+    setExpandedId(id);
+    const next = new URLSearchParams(searchParams);
+    next.set("sheet", id);
+    setSearchParams(next, { replace: true });
+  }
+
+  function closeExpanded() {
+    setExpandedId(null);
+    const next = new URLSearchParams(searchParams);
+    next.delete("sheet");
+    setSearchParams(next, { replace: true });
+  }
 
   const [formData, setFormData] = useState({
     companyName: "",
@@ -92,7 +112,7 @@ export default function InterviewCheatSheet() {
     return (
       <PageShell>
         <PageHeader title="Interview Cheat Sheet" subtitle="Loading..." />
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map(i => <Card key={i} className="h-48 animate-pulse bg-gray-100"><div className="h-full" /></Card>)}
         </div>
       </PageShell>
@@ -119,7 +139,7 @@ export default function InterviewCheatSheet() {
           <Button onClick={() => { resetForm(); setShowForm(true); }} className="mt-4">Create Cheat Sheet</Button>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {sheets.map(sheet => (
             <Card key={sheet.id} hover className="relative">
               <div className="flex items-start justify-between mb-3">
@@ -137,13 +157,45 @@ export default function InterviewCheatSheet() {
               </div>
 
               <div className="flex gap-2 pt-2 border-t border-gray-100">
-                <Link to={`/interview-cheat-sheet/${sheet.id}`} className="flex-1 text-center text-sm font-medium text-primary-600 hover:underline">View Full</Link>
-                <Button variant="ghost" size="sm" onClick={() => navigate(`/interview-cheat-sheet/${sheet.id}`)}>Open</Button>
+                <button
+                  onClick={() => (expandedId === sheet.id ? closeExpanded() : openSheet(sheet.id))}
+                  className="flex-1 text-center text-sm font-medium text-primary-600 hover:underline"
+                >
+                  {expandedId === sheet.id ? "Hide" : "View Full"}
+                </button>
+                <Button variant="ghost" size="sm" onClick={() => openSheet(sheet.id)}>Open</Button>
               </div>
             </Card>
           ))}
         </div>
       )}
+
+      {/* Expanded sheet — rendered in place; shareable via ?sheet=<id> */}
+      {expandedId &&
+        (() => {
+          const sheet = sheets.find((s) => s.id === expandedId);
+          if (!sheet) return null;
+          return (
+            <section className="mt-8" aria-label={`${sheet.companyName} cheat sheet`}
+              ref={(el) => { if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); }}
+            >
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">{sheet.companyName} — {sheet.roleTitle}</h2>
+                  <p className="text-sm text-gray-500">Generated {new Date(sheet.createdAt).toLocaleDateString()}</p>
+                </div>
+                <Button variant="secondary" size="sm" onClick={closeExpanded}>Close</Button>
+              </div>
+              <Card>
+                <div className="prose prose-sm max-w-none text-gray-700">
+                  {sheet.content.split("\n\n").map((para: string, i: number) => (
+                    <p key={i}>{para}</p>
+                  ))}
+                </div>
+              </Card>
+            </section>
+          );
+        })()}
 
       {/* Create Modal */}
       <Modal

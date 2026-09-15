@@ -2,6 +2,10 @@
   "name": "career-autopilot",
   "private": true,
   "type": "module",
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "node-fetch": "^3.3.2"
+  },
   "scripts": {
     "verify": "node scripts/verify.mjs"
   }

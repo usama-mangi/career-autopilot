@@ -164,6 +164,40 @@ describe('ResumesService.resume versions', () => {
     });
   });
 
+  it('updateResumeVersion persists roleType from the client contract', async () => {
+    const prisma = {
+      resumeVersion: {
+        findUnique: vi.fn().mockResolvedValue({ id: 'v1', resumeId: 'r1', resume: { userId: 'u1' } }),
+        update: vi.fn().mockResolvedValue({ id: 'v1' }),
+      },
+    };
+    const svc = makeService(prisma);
+
+    await svc.updateResumeVersion('v1', 'u1', { name: 'Edited', roleType: 'design' });
+
+    expect(prisma.resumeVersion.update).toHaveBeenCalledWith({
+      where: { id: 'v1' },
+      data: expect.objectContaining({ name: 'Edited', roleType: 'design' }),
+    });
+  });
+
+  it('updateResumeVersion still honors the legacy description alias', async () => {
+    const prisma = {
+      resumeVersion: {
+        findUnique: vi.fn().mockResolvedValue({ id: 'v1', resumeId: 'r1', resume: { userId: 'u1' } }),
+        update: vi.fn().mockResolvedValue({ id: 'v1' }),
+      },
+    };
+    const svc = makeService(prisma);
+
+    await svc.updateResumeVersion('v1', 'u1', { description: 'product' });
+
+    expect(prisma.resumeVersion.update).toHaveBeenCalledWith({
+      where: { id: 'v1' },
+      data: expect.objectContaining({ roleType: 'product' }),
+    });
+  });
+
   it('getResumeVersion rejects versions belonging to another user', async () => {
     const svc = makeService({
       resumeVersion: {
