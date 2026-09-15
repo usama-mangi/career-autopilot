@@ -18,8 +18,10 @@ interface NavSection {
 }
 
 const SECTIONS: NavSection[] = [
+  // Ordered by the lifecycle a job moves through. Each section header is a
+  // stage of the journey; everything else lives in Library.
   {
-    label: "Jobs",
+    label: "Find",
     items: [
       { to: "/jobs", label: "Search Jobs", icon: SearchIcon },
       { to: "/saved-searches", label: "Saved Searches", icon: BookmarkIcon },
@@ -28,35 +30,49 @@ const SECTIONS: NavSection[] = [
     ],
   },
   {
-    label: "Applications",
+    label: "Prepare",
     items: [
-      { to: "/applications", label: "Pipeline", icon: KanbanIcon },
+      { to: "/resumes", label: "My Resumes", icon: DocumentIcon },
+      { to: "/cover-letter-templates", label: "Cover Letters", icon: LetterIcon },
+      { to: "/portfolio", label: "Portfolio", icon: FolderIcon },
+    ],
+  },
+  {
+    label: "Track",
+    items: [
+      { to: "/applications", label: "My Jobs", icon: TargetIcon },
       { to: "/applications/analytics", label: "Analytics", icon: ChartIcon },
     ],
   },
   {
     label: "Interview",
     items: [
-      { to: "/interview-prep", label: "Prep Hub", icon: MicIcon },
       { to: "/interview-schedule", label: "Schedule", icon: CalendarIcon },
-      { to: "/mock-interview", label: "Mock Interview", icon: ChatIcon },
-      { to: "/technical-practice", label: "Practice", icon: CodeIcon },
+      { to: "/interview-prep", label: "Prep Hub", icon: MicIcon },
     ],
   },
   {
-    label: "Offers",
+    label: "Land",
     items: [
-      { to: "/offers", label: "All Offers", icon: TrophyIcon },
+      { to: "/offers", label: "Offers", icon: TrophyIcon },
       { to: "/offers/compare", label: "Compare", icon: CompareIcon },
       { to: "/offers/negotiate", label: "Negotiate", icon: DollarIcon },
     ],
   },
   {
-    label: "Resume",
+    label: "After",
     items: [
-      { to: "/resumes", label: "My Resumes", icon: DocumentIcon },
-      { to: "/cover-letter-templates", label: "Cover Letters", icon: LetterIcon },
-      { to: "/portfolio", label: "Portfolio", icon: FolderIcon },
+      { to: "/onboarding/first-90-days", label: "First 90 Days", icon: RocketIcon },
+    ],
+  },
+  {
+    label: "Library",
+    items: [
+      { to: "/interview-notes", label: "Interview Notes", icon: ChatIcon },
+      { to: "/mock-interview", label: "Mock Interview", icon: ChatIcon },
+      { to: "/technical-practice", label: "Practice", icon: CodeIcon },
+      { to: "/references", label: "References", icon: LetterIcon },
+      { to: "/linkedin-profile", label: "LinkedIn Profile", icon: BuildingIcon },
     ],
   },
 ];
@@ -97,6 +113,22 @@ function KanbanIcon(active: boolean) {
   return (
     <svg className={cn("size-4", active ? "text-primary-500" : "text-gray-400")} fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 4.5v15m6-15v15m-10.875 0h15.75c.621 0 1.125-.504 1.125-1.125V5.625c0-.621-.504-1.125-1.125-1.125H4.125C3.504 4.5 3 5.004 3 5.625v12.75c0 .621.504 1.125 1.125 1.125z" />
+    </svg>
+  );
+}
+
+function TargetIcon(active: boolean) {
+  return (
+    <svg className={cn("size-4", active ? "text-primary-500" : "text-gray-400")} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 21a9 9 0 100-18 9 9 0 000 18zm0-4a5 5 0 100-10 5 5 0 000 10zm0-4a1 1 0 100-2 1 1 0 000 2z" />
+    </svg>
+  );
+}
+
+function RocketIcon(active: boolean) {
+  return (
+    <svg className={cn("size-4", active ? "text-primary-500" : "text-gray-400")} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
     </svg>
   );
 }
@@ -364,7 +396,11 @@ export function Sidebar({ collapsed = false, onToggle, open = false, onClose }: 
 
         {/* Sections */}
         {SECTIONS.map((section) => {
-          const expanded = expandedSections[section.label] ?? (activeSection === section.label);
+          // Lifecycle sections are small and always relevant — expand them by
+          // default so the journey is visible at a glance; Library stays
+          // collapsed to keep the navigation scannable.
+          const lifecycleDefault = section.label !== "Library";
+          const expanded = expandedSections[section.label] ?? (lifecycleDefault || activeSection === section.label);
           const hasActive = section.items.some((item) => isActive(item.to));
 
           return (

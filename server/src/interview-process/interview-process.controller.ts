@@ -12,6 +12,20 @@ import {
 } from '@nestjs/common';
 import { SessionGuard } from '../auth/guards/session.guard';
 import { InterviewProcessService } from './interview-process.service';
+import {
+  CreateCaseStudyDto,
+  CreateFeedbackDto,
+  CreateFollowUpEmailDto,
+  CreateInterviewNoteDto,
+  CreatePanelInterviewDto,
+  GenerateCaseStudyDto,
+  GenerateFollowUpEmailDto,
+  UpdateCaseStudyDto,
+  UpdateFeedbackDto,
+  UpdateFollowUpEmailDto,
+  UpdateInterviewNoteDto,
+  UpdatePanelInterviewDto,
+} from './interview-process.dto';
 import { BetterAuthRequest } from '../common/types';
 
 @Controller('interview-process')
@@ -22,7 +36,7 @@ export class InterviewProcessController {
   // ─── Interview Notes ───
 
   @Post('notes')
-  async createNote(@Request() req: BetterAuthRequest, @Body() body: any) {
+  async createNote(@Request() req: BetterAuthRequest, @Body() body: CreateInterviewNoteDto) {
     return this.processService.createNote(req.user?.userId ?? '', body);
   }
 
@@ -41,7 +55,7 @@ export class InterviewProcessController {
   }
 
   @Patch('notes/:id')
-  async updateNote(@Request() req: BetterAuthRequest, @Param('id') id: string, @Body() body: any) {
+  async updateNote(@Request() req: BetterAuthRequest, @Param('id') id: string, @Body() body: UpdateInterviewNoteDto) {
     return this.processService.updateNote(req.user?.userId ?? '', id, body);
   }
 
@@ -54,7 +68,7 @@ export class InterviewProcessController {
   // ─── Interviewer Feedback ───
 
   @Post('notes/:noteId/feedback')
-  async addFeedback(@Request() req: BetterAuthRequest, @Param('noteId') noteId: string, @Body() body: any) {
+  async addFeedback(@Request() req: BetterAuthRequest, @Param('noteId') noteId: string, @Body() body: CreateFeedbackDto) {
     return this.processService.addFeedback(req.user?.userId ?? '', noteId, body);
   }
 
@@ -64,7 +78,7 @@ export class InterviewProcessController {
   }
 
   @Patch('feedback/:id')
-  async updateFeedback(@Request() req: BetterAuthRequest, @Param('id') id: string, @Body() body: any) {
+  async updateFeedback(@Request() req: BetterAuthRequest, @Param('id') id: string, @Body() body: UpdateFeedbackDto) {
     return this.processService.updateFeedback(req.user?.userId ?? '', id, body);
   }
 
@@ -77,7 +91,7 @@ export class InterviewProcessController {
   // ─── Follow-up Emails ───
 
   @Post('follow-up-emails')
-  async createFollowUpEmail(@Request() req: BetterAuthRequest, @Body() body: any) {
+  async createFollowUpEmail(@Request() req: BetterAuthRequest, @Body() body: CreateFollowUpEmailDto) {
     return this.processService.createFollowUpEmail(req.user?.userId ?? '', body);
   }
 
@@ -96,7 +110,7 @@ export class InterviewProcessController {
   }
 
   @Patch('follow-up-emails/:id')
-  async updateFollowUpEmail(@Request() req: BetterAuthRequest, @Param('id') id: string, @Body() body: any) {
+  async updateFollowUpEmail(@Request() req: BetterAuthRequest, @Param('id') id: string, @Body() body: UpdateFollowUpEmailDto) {
     return this.processService.updateFollowUpEmail(req.user?.userId ?? '', id, body);
   }
 
@@ -107,14 +121,14 @@ export class InterviewProcessController {
   }
 
   @Post('follow-up-emails/generate')
-  async generateFollowUpEmail(@Request() req: BetterAuthRequest, @Body() body: any) {
+  async generateFollowUpEmail(@Request() req: BetterAuthRequest, @Body() body: GenerateFollowUpEmailDto) {
     return this.processService.generateFollowUpEmail(req.user?.userId ?? '', body);
   }
 
   // ─── Panel Interviews ───
 
   @Post('panel-interviews')
-  async createPanelInterview(@Request() req: BetterAuthRequest, @Body() body: any) {
+  async createPanelInterview(@Request() req: BetterAuthRequest, @Body() body: CreatePanelInterviewDto) {
     return this.processService.createPanelInterview(req.user?.userId ?? '', body);
   }
 
@@ -132,7 +146,7 @@ export class InterviewProcessController {
   }
 
   @Patch('panel-interviews/:id')
-  async updatePanelInterview(@Request() req: BetterAuthRequest, @Param('id') id: string, @Body() body: any) {
+  async updatePanelInterview(@Request() req: BetterAuthRequest, @Param('id') id: string, @Body() body: UpdatePanelInterviewDto) {
     return this.processService.updatePanelInterview(req.user?.userId ?? '', id, body);
   }
 
@@ -145,7 +159,7 @@ export class InterviewProcessController {
   // ─── Case Studies ───
 
   @Post('case-studies')
-  async createCaseStudy(@Request() req: BetterAuthRequest, @Body() body: any) {
+  async createCaseStudy(@Request() req: BetterAuthRequest, @Body() body: CreateCaseStudyDto) {
     return this.processService.createCaseStudy(req.user?.userId ?? '', body);
   }
 
@@ -160,7 +174,7 @@ export class InterviewProcessController {
   }
 
   @Patch('case-studies/:id')
-  async updateCaseStudy(@Request() req: BetterAuthRequest, @Param('id') id: string, @Body() body: any) {
+  async updateCaseStudy(@Request() req: BetterAuthRequest, @Param('id') id: string, @Body() body: UpdateCaseStudyDto) {
     return this.processService.updateCaseStudy(req.user?.userId ?? '', id, body);
   }
 
@@ -171,7 +185,7 @@ export class InterviewProcessController {
   }
 
   @Post('case-studies/generate')
-  async generateCaseStudy(@Request() req: BetterAuthRequest, @Body() body: any) {
+  async generateCaseStudy(@Request() req: BetterAuthRequest, @Body() body: GenerateCaseStudyDto) {
     return this.processService.generateCaseStudy(req.user?.userId ?? '', body);
   }
 

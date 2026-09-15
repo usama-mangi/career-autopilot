@@ -364,6 +364,9 @@ model JobApplication {
 
   communications  CommunicationLog[]
   referral        ReferralRequest?
+  offerComparisons OfferComparison[]
+  negotiationCoaches NegotiationCoach[]
+  first90DaysTrackers First90DaysTracker[]
 
   @@index([userId, status])
   @@index([userId, appliedAt])
@@ -674,6 +677,8 @@ model OfferComparison {
   id              String   @id @default(uuid())
   userId          String
   user            user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applicationId   String?
+  application     JobApplication? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
   name            String   // e.g., "Google vs Meta"
   offers          Json     // OfferItem[]
   weights         Json     // { compensation, growth, culture, workLifeBalance, location, benefits }
@@ -683,6 +688,7 @@ model OfferComparison {
   updatedAt       DateTime @updatedAt
 
   @@index([userId])
+  @@index([applicationId])
 }
 
 model NegotiationCoach {
@@ -690,6 +696,7 @@ model NegotiationCoach {
   userId          String
   user            user     @relation(fields: [userId], references: [id], onDelete: Cascade)
   applicationId   String?
+  application     JobApplication? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
   companyName     String
   roleTitle       String
   offerDetails    Json     // { baseSalary, equity, bonus, signOn, benefits }
@@ -701,6 +708,7 @@ model NegotiationCoach {
   updatedAt       DateTime @updatedAt
 
   @@index([userId])
+  @@index([applicationId])
 }
 
 model OfferDecision {
@@ -831,6 +839,7 @@ model First90DaysTracker {
   userId          String
   user            user     @relation(fields: [userId], references: [id], onDelete: Cascade)
   applicationId   String?
+  application     JobApplication? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
   companyName     String
   roleTitle       String
   startDate       String?  // ISO date
@@ -843,4 +852,5 @@ model First90DaysTracker {
   updatedAt       DateTime @updatedAt
 
   @@index([userId])
+  @@index([applicationId])
 }

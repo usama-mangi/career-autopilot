@@ -1,33 +1,44 @@
-import type { JobMatchResult, SavedSearch, JobApplication, InterviewScheduleEntry, Resume, ApplicationStatus } from "types";
+import type { JobApplication, InterviewScheduleEntry, InterviewNote, FollowUpEmail } from "types";
 import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { Skeleton } from "~/components/Skeleton";
-import { Button, Card, ScoreBadge } from "~/components/ui";
-import { APPLICATION_STATUS_CONFIG, PIPELINE_STATUSES, formatDate, getNextStatuses } from "~/lib/status-config";
+import { Button, Card, useToastHelpers } from "~/components/ui";
+import { ErrorBanner, reportError } from "~/components/ui";
 
-function TrendIndicator({ value, label }: { value: number; label: string }) {
-  if (value === 0) return <span className="text-xs text-gray-400">{label}</span>;
-  const isPositive = value > 0;
-  return (
-    <span className={`text-xs font-medium ${isPositive ? "text-success" : "text-danger"}`}>
-      {isPositive ? "+" : ""}{value} {label}
-    </span>
-  );
+function daysSince(iso?: string | null): number | null {
+  if (!iso) return null;
+  return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+}
+
+function isClosed(status: string): boolean {
+  return status === "rejected" || status === "accepted" || status === "withdrawn";
+}
+
+/** One thing that deserves the user's attention today. */
+interface Nudge {
+  id: string;
+  kind: "interview" | "stale" | "offer" | "draft" | "closed-loop" | "followup";
+  urgency: "now" | "soon" | "later";
+  title: string;
+  detail: string;
+  to: string;
+  cta: string;
 }
 
 export default function Dashboard() {
-  const [jobMatches, setJobMatches] = useState<JobMatchResult[]>([]);
-  const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
   const [pipeline, setPipeline] = useState<JobApplication[]>([]);
   const [upcomingInterviews, setUpcomingInterviews] = useState<InterviewScheduleEntry[]>([]);
-  const [resumes, setResumes] = useState<Resume[]>([]);
+  const [notes, setNotes] = useState<InterviewNote[]>([]);
+  const [unsentEmails, setUnsentEmails] = useState<FollowUpEmail[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const { data: session, isPending } = useSession();
   const isAuthenticated = !!session;
   const navigate = useNavigate();
+  const { error: toastError } = useToastHelpers();
 
   useEffect(() => {
     if (!isPending && !isAuthenticated) navigate("/login");
@@ -37,417 +48,312 @@ export default function Dashboard() {
     if (!isAuthenticated) return;
     async function load() {
       try {
-        const [matchesData, searchesData, pipelineData, scheduleData, resumesData] = await Promise.allSettled([
-          api.jobs.batchMatch([], "").catch(() => null),
-          api.jobs.savedSearches.list(),
-          api.applications.list(),
+        const [pipelineData, scheduleData, noteData, emailData] = await Promise.allSettled([
+          api.applications.list({ limit: 100 }),
           api.interviewPrep.listSchedule({ status: "upcoming" }),
-          api.resumes.list(),
+          api.interviewProcess.listNotes(),
+          api.interviewProcess.listFollowUpEmails(),
         ]);
-
-        if (matchesData.status === "fulfilled" && matchesData.value) setJobMatches(matchesData.value);
-        if (searchesData.status === "fulfilled") setSavedSearches(searchesData.value || []);
-        if (pipelineData.status === "fulfilled") setPipeline((pipelineData.value?.applications || pipelineData.value || []) as JobApplication[]);
+        if (pipelineData.status === "fulfilled") {
+          setPipeline((pipelineData.value?.applications || []) as unknown as JobApplication[]);
+        }
         if (scheduleData.status === "fulfilled") setUpcomingInterviews(scheduleData.value || []);
-        if (resumesData.status === "fulfilled") setResumes(resumesData.value || []);
+        if (noteData.status === "fulfilled") setNotes(noteData.value || []);
+        if (emailData.status === "fulfilled") {
+          setUnsentEmails((emailData.value || []).filter((e) => !e.sentAt));
+        }
       } catch (err) {
-        console.error("Failed to load dashboard:", err);
+        reportError(err, { title: "Couldn't load your day", toastError, setError, retry: load });
       }
       setLoading(false);
     }
     load();
   }, [isAuthenticated]);
 
-  async function handleStatusChange(appId: string, status: ApplicationStatus) {
-    try {
-      await api.applications.updateStatus(appId, { status });
-      setPipeline((prev: JobApplication[]) => prev.map((p) => (p.id === appId ? { ...p, status } : p)));
-    } catch (err) {
-      console.error("Failed to update status:", err);
-    }
-  }
-
   const allApps = pipeline || [];
-  const totalApps = allApps.length;
-  const appliedCount = allApps.filter((a: JobApplication) => a.status === "applied").length;
-  const interviewingCount = allApps.filter((a: JobApplication) => a.status === "interviewing" || a.status === "phone_screen").length;
-  const offerCount = allApps.filter((a: JobApplication) => a.status === "offer" || a.status === "accepted").length;
-  const draftCount = allApps.filter((a: JobApplication) => a.status === "draft").length;
-
+  const activeApps = allApps.filter((a) => !isClosed(a.status));
   const now = new Date();
   const upcoming = upcomingInterviews
     .filter((i: InterviewScheduleEntry) => new Date(i.scheduledAt) > now)
-    .slice(0, 3);
+    .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
 
-  const topMatch = jobMatches.length > 0
-    ? jobMatches.reduce((best, m) => (m.score ?? m.matchScore ?? 0) > (best.score ?? best.matchScore ?? 0) ? m : best, jobMatches[0])
-    : null;
+  // ---- Build the Today nudges: the whole lifecycle, filtered to what needs you ----
+  const nudges: Nudge[] = [];
+
+  for (const i of upcoming.slice(0, 3)) {
+    const when = new Date(i.scheduledAt);
+    const daysAway = Math.ceil((when.getTime() - now.getTime()) / 86400000);
+    nudges.push({
+      id: `interview-${i.id}`,
+      kind: "interview",
+      urgency: daysAway <= 1 ? "now" : "soon",
+      title: `${i.companyName} — ${i.roleTitle}`,
+      detail: daysAway <= 0
+        ? `Interview ${when.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })} today`
+        : `Interview in ${daysAway === 1 ? "1 day" : `${daysAway} days`} · ${when.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}`,
+      to: "/interview-schedule",
+      cta: "Prep now",
+    });
+  }
+
+  for (const app of activeApps) {
+    if (app.status === "offer") {
+      nudges.push({
+        id: `offer-${app.id}`,
+        kind: "offer",
+        urgency: "now",
+        title: `Offer from ${app.companyName}`,
+        detail: "Compare it against your other options and negotiate before deciding.",
+        to: `/applications/${app.id}`,
+        cta: "Review offer",
+      });
+    }
+    if (app.status === "accepted") {
+      nudges.push({
+        id: `accepted-${app.id}`,
+        kind: "closed-loop",
+        urgency: "now",
+        title: `You accepted ${app.roleTitle} at ${app.companyName} 🎉`,
+        detail: "Turn the offer into a 30-60-90 day plan so day one goes well.",
+        to: `/onboarding/first-90-days?applicationId=${app.id}&company=${encodeURIComponent(app.companyName)}&role=${encodeURIComponent(app.roleTitle)}`,
+        cta: "Plan first 90 days",
+      });
+    }
+    if (app.status === "draft") {
+      nudges.push({
+        id: `draft-${app.id}`,
+        kind: "draft",
+        urgency: "later",
+        title: `${app.roleTitle} at ${app.companyName}`,
+        detail: "Still in Draft — tailor your resume before you submit.",
+        to: `/applications/${app.id}`,
+        cta: "Finish & submit",
+      });
+    }
+    const since = daysSince(app.updatedAt || app.appliedAt || app.createdAt);
+    if (app.status === "applied" && since !== null && since >= 10) {
+      nudges.push({
+        id: `stale-${app.id}`,
+        kind: "stale",
+        urgency: since >= 21 ? "soon" : "later",
+        title: `${app.companyName} — no reply for ${since} days`,
+        detail: "Send a polite follow-up, or move it on if you've heard back.",
+        to: `/applications/${app.id}`,
+        cta: "Follow up",
+      });
+    }
+  }
+
+  // Drafted-but-unsent follow-up emails: the interview loop's open ends.
+  // The nudge links back to the note they came from, where the email can be
+  // reviewed, copied, and marked sent.
+  const noteById = new Map(notes.map((n) => [n.id, n]));
+  for (const email of unsentEmails.slice(0, 4)) {
+    const note = email.interviewNoteId ? noteById.get(email.interviewNoteId) : null;
+    const age = daysSince(email.createdAt) ?? 0;
+    nudges.push({
+      id: `followup-${email.id}`,
+      kind: "followup",
+      urgency: age >= 7 ? "now" : age >= 3 ? "soon" : "later",
+      title: note
+        ? `Follow-up for ${note.companyName} — ${note.roleTitle}`
+        : `Follow-up email: ${email.subject}`,
+      detail: `\u201C${email.subject}\u201D drafted ${age === 0 ? "today" : age === 1 ? "yesterday" : `${age} days ago`} — copy it and send.`,
+      // Land on the notes page with that email's preview expanded, ready
+      // to copy or mark sent (fall back to the emails hub when orphaned).
+      to: note
+        ? `/interview-notes?note=${note.id}&email=${email.id}`
+        : "/follow-up-emails",
+      cta: "Review & send",
+    });
+  }
+
+  const urgentFirst: Record<Nudge["urgency"], number> = { now: 0, soon: 1, later: 2 };
+  nudges.sort((a, b) => urgentFirst[a.urgency] - urgentFirst[b.urgency]);
+
+  const counts = {
+    total: allApps.length,
+    active: activeApps.length,
+    interviewing: activeApps.filter((a) => a.status === "interviewing" || a.status === "phone_screen").length,
+    offers: activeApps.filter((a) => a.status === "offer").length,
+    drafts: activeApps.filter((a) => a.status === "draft").length,
+    waiting: activeApps.filter((a) => a.status === "applied").length,
+  };
 
   if (loading) {
     return (
       <div className="p-8 max-w-[1200px] mx-auto">
         <div className="space-y-6">
-          <div className="h-12 w-64 bg-[#F5EDE4] rounded-lg animate-pulse" />
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
+          <div className="h-12 w-72 bg-[#F5EDE4] rounded-lg animate-pulse" />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            {[1, 2, 3, 4, 5].map((i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
           </div>
-          <div className="grid gap-6 lg:grid-cols-3">
-            <Skeleton className="h-80 rounded-xl lg:col-span-2" />
-            <Skeleton className="h-80 rounded-xl" />
-          </div>
+          <Skeleton className="h-80 rounded-xl" />
         </div>
       </div>
     );
   }
 
+  const firstName = session?.user?.name?.split(" ")[0];
+
   return (
     <div className="p-8 max-w-[1200px] mx-auto">
-      {/* Welcome header — expedition style */}
+      {/* Greeting — the day, not the org chart */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            Welcome back{session?.user?.name ? `, ${session.user.name}` : ""}
+            {firstName ? `Your day, ${firstName}` : "Your day"}
           </h1>
           <p className="text-sm text-gray-600 mt-1">
-            {upcoming.length > 0
-              ? `You have ${upcoming.length} interview${upcoming.length > 1 ? "s" : ""} this week`
-              : totalApps > 0
-                ? "Here's your career traverse overview"
-                : "Your expedition starts here — let's map your first route"
-            }
+            {nudges.length > 0
+              ? `${nudges.filter((n) => n.urgency === "now").length} need${nudges.filter((n) => n.urgency === "now").length === 1 ? "s" : ""} attention now · ${counts.active} active job${counts.active !== 1 ? "s" : ""}`
+              : counts.active > 0
+                ? "Everything's moving — nothing needs you right now."
+                : "Start your search below. Every job you consider will live here."}
           </p>
         </div>
         <Link to="/jobs">
-          <Button>Search Jobs</Button>
+          <Button>Find Jobs</Button>
         </Link>
       </div>
 
-      {/* Stats row — warm cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
-        <Card className="p-5">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm text-gray-600">Total Applications</p>
-            <div className="w-8 h-8 rounded-lg bg-[#FFF8F0] border border-[#E8DDD1] flex items-center justify-center">
-              <svg className="size-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-              </svg>
-            </div>
-          </div>
-          <p className="text-3xl font-bold text-gray-900">{totalApps}</p>
-        </Card>
+      {error && <ErrorBanner error={error} onRetry={() => navigate(0)} />}
 
-        <Card className="p-5">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm text-gray-600">Applied</p>
-            <div className="w-8 h-8 rounded-lg bg-primary-50 border border-primary-100 flex items-center justify-center">
-              <svg className="size-4 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
-              </svg>
-            </div>
-          </div>
-          <p className="text-3xl font-bold text-primary-600">{appliedCount}</p>
-          <TrendIndicator value={appliedCount - draftCount} label="vs draft" />
-        </Card>
-
-        <Card className="p-5">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm text-gray-600">Interviewing</p>
-            <div className="w-8 h-8 rounded-lg bg-[#FFFBEB] border border-[#FEF3C7] flex items-center justify-center">
-              <svg className="size-4 text-[#A16207]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
-              </svg>
-            </div>
-          </div>
-          <p className="text-3xl font-bold text-[#A16207]">{interviewingCount}</p>
-        </Card>
-
-        <Card className="p-5">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-sm text-gray-600">Offers</p>
-            <div className="w-8 h-8 rounded-lg bg-[#ECFDF5] border border-[#D1FAE5] flex items-center justify-center">
-              <svg className="size-4 text-[#065F46]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.504-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M18.75 4.236c.982.143 1.954.317 2.916.52A6.003 6.003 0 0016.27 9.728M18.75 4.236V4.5c0 2.108-.966 3.99-2.48 5.228m0 0a6.023 6.023 0 01-2.77.665 6.023 6.023 0 01-2.77-.665" />
-              </svg>
-            </div>
-          </div>
-          <p className="text-3xl font-bold text-[#065F46]">{offerCount}</p>
-        </Card>
-      </div>
-
-      {/* Empty state — first-time user */}
-      {totalApps === 0 && (
-        <div className="mb-8 p-6 bg-[#FFF8F0] rounded-xl border border-[#E8DDD1]">
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center shrink-0">
-              <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="text-base font-semibold text-gray-900 mb-1">Start your expedition</h3>
-              <p className="text-sm text-gray-600 mb-3">
-                Search for jobs, then apply to start building your application pipeline. Your AI sherpa will track everything.
-              </p>
-              <div className="flex gap-2">
-                <Link to="/jobs">
-                  <Button size="sm">Search Jobs</Button>
-                </Link>
-                <Link to="/resumes">
-                  <Button variant="outline" size="sm">Upload Resume</Button>
-                </Link>
-              </div>
-            </div>
-          </div>
+      {/* Journey snapshot — stages of the lifecycle, not vanity metrics */}
+      {counts.total > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
+          {[
+            { label: "Drafting", count: counts.drafts, to: "/applications", stage: "draft" },
+            { label: "Waiting", count: counts.waiting, to: "/applications", stage: "applied" },
+            { label: "Interviewing", count: counts.interviewing, to: "/interview-schedule", stage: "interviewing" },
+            { label: "Offers", count: counts.offers, to: "/offers", stage: "offer" },
+            { label: "Total Jobs", count: counts.total, to: "/applications" },
+          ].map((s) => (
+            <Link key={s.label} to={s.to} className="block">
+              <Card className="p-4 hover:shadow-md transition-shadow">
+                <p className="text-xs text-gray-500 mb-1">{s.label}</p>
+                <p className="text-2xl font-bold text-gray-900">{s.count}</p>
+              </Card>
+            </Link>
+          ))}
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left column — pipeline + matches */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Pipeline mini-view */}
-          <Card>
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-base font-semibold text-gray-900">Application Pipeline</h2>
-              <Link to="/applications">
-                <Button variant="ghost" size="sm">View All</Button>
-              </Link>
+      {/* Empty state — first-time user */}
+      {counts.total === 0 && (
+        <Card className="mb-8 p-8">
+          <div className="max-w-lg">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Start with a job, not a dashboard</h3>
+            <p className="text-sm text-gray-600 mb-5">
+              Find a role you like, match it against your resume, tailor everything, and track it from
+              application to offer to your first 90 days — all in one place.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Link to="/jobs"><Button>Find Jobs</Button></Link>
+              <Link to="/resumes"><Button variant="outline">Start from My Resume</Button></Link>
             </div>
-            <div className="grid grid-cols-5 gap-3">
-              {PIPELINE_STATUSES.map((status) => {
-                const cfg = APPLICATION_STATUS_CONFIG[status];
-                const apps = allApps.filter((a: JobApplication) => a.status === status);
-                return (
-                  <div key={status} className={`rounded-xl p-3 min-h-[200px] border ${cfg.borderColor} ${cfg.bgColor}`}>
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-xs font-medium text-gray-600 truncate">{cfg.label}</h3>
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${cfg.bgColor} ${cfg.color} border ${cfg.borderColor}`}>
-                        {apps.length}
-                      </span>
-                    </div>
-                    <div className="space-y-1.5">
-                      {apps.slice(0, 4).map((app: JobApplication) => (
-                        <div
-                          key={app.id}
-                          className="bg-white p-2.5 rounded-lg border border-[#E8DDD1] hover:shadow-sm transition-shadow cursor-pointer text-xs"
-                          onClick={() => navigate(`/applications/${app.id}`)}
-                        >
-                          <p className="font-medium text-gray-900 truncate">{app.companyName}</p>
-                          <p className="text-gray-600 truncate mt-0.5">{app.roleTitle}</p>
-                        </div>
-                      ))}
-                      {apps.length > 4 && (
-                        <p className="text-[10px] text-gray-400 text-center">+{apps.length - 4} more</p>
-                      )}
-                      {apps.length === 0 && (
-                        <p className="text-[10px] text-gray-400 text-center py-4">Empty</p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </Card>
+          </div>
+        </Card>
+      )}
 
-          {/* AI suggestion — warm accent */}
-          {topMatch && (topMatch.score ?? topMatch.matchScore ?? 0) >= 80 && (
-            <Card className="p-5 bg-primary-50 border-primary-100">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 rounded-lg bg-primary-500 flex items-center justify-center shrink-0">
-                  <svg className="size-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
-                  </svg>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 mb-0.5">AI Recommendation</p>
-                  <p className="text-sm text-gray-600">
-                    <span className="font-medium">{topMatch.title}</span> at{" "}
-                    <span className="font-medium">{topMatch.company}</span> —{" "}
-                    <ScoreBadge score={topMatch.score ?? topMatch.matchScore ?? 0} size="sm" matchedSkills={topMatch.matchedSkills} missingSkills={topMatch.missingSkills} summary={topMatch.summary} /> match.
-                    {" "}
-                    <Link to={`/jobs/${topMatch.jobId}`} className="text-primary-600 font-medium hover:underline">
-                      View & apply →
-                    </Link>
+      {/* Today — the unified brief across every stage */}
+      {counts.total > 0 && (
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-6">
+            <Card>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-semibold text-gray-900">Today</h2>
+                <Link to="/applications"><Button variant="ghost" size="sm">All Jobs</Button></Link>
+              </div>
+              {nudges.length === 0 ? (
+                <div className="text-center py-10">
+                  <p className="text-sm font-medium text-gray-900 mb-1">Nothing needs you today</p>
+                  <p className="text-xs text-gray-500">
+                    Keep the pipeline moving when you're ready — new applications, follow-ups, and prep all start from a job.
                   </p>
                 </div>
-              </div>
+              ) : (
+                <div className="space-y-2">
+                  {nudges.slice(0, 8).map((n) => (
+                    <Link
+                      key={n.id}
+                      to={n.to}
+                      className="flex items-center gap-4 p-3 rounded-lg border border-[#E8DDD1] bg-[#FFFBF5] hover:bg-[#FFF8F0] hover:border-primary-200 transition-colors"
+                    >
+                      <span
+                        className={`shrink-0 w-1.5 h-10 rounded-full ${
+                          n.urgency === "now" ? "bg-danger" : n.urgency === "soon" ? "bg-warning" : "bg-gray-300"
+                        }`}
+                        aria-hidden="true"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{n.title}</p>
+                        <p className="text-xs text-gray-600 truncate">{n.detail}</p>
+                      </div>
+                      <span className="text-xs font-medium text-primary-600 shrink-0">{n.cta} →</span>
+                    </Link>
+                  ))}
+                  {nudges.length > 8 && (
+                    <p className="text-xs text-gray-400 text-center pt-1">+{nudges.length - 8} more across your pipeline</p>
+                  )}
+                </div>
+              )}
             </Card>
-          )}
+          </div>
 
-          {/* Top matches */}
-          {jobMatches.length > 0 && (
+          {/* Right rail: the journey, one click away */}
+          <div className="space-y-6">
             <Card>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-semibold text-gray-900">Top Job Matches</h2>
-                <Link to="/jobs">
-                  <Button variant="ghost" size="sm">View All</Button>
-                </Link>
-              </div>
-              <div className="space-y-2">
-                {jobMatches.slice(0, 4).map((match: JobMatchResult) => (
+              <h2 className="text-base font-semibold text-gray-900 mb-4">The Journey</h2>
+              <div className="space-y-1">
+                {[
+                  { to: "/jobs", label: "1 · Find a job", hint: "Search & match" },
+                  { to: "/resumes", label: "2 · Prepare", hint: "Tailor resume & cover letter" },
+                  { to: "/applications", label: "3 · Track", hint: "Your pipeline by stage" },
+                  { to: "/interview-schedule", label: "4 · Interview", hint: "Schedule, prep, notes" },
+                  { to: "/offers", label: "5 · Land the offer", hint: "Compare & negotiate" },
+                  { to: "/onboarding/first-90-days", label: "6 · First 90 days", hint: "Plan your start" },
+                ].map((step) => (
                   <Link
-                    key={match.jobId}
-                    to={`/jobs/${match.jobId}`}
-                    className="flex items-center gap-4 p-3 bg-[#FFF8F0] rounded-lg hover:bg-[#F5EDE4] transition-colors border border-[#E8DDD1]"
+                    key={step.to}
+                    to={step.to}
+                    className="flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-[#FFFBF5] transition-colors group"
                   >
-                    <ScoreBadge score={match.score ?? match.matchScore} size="sm" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">{match.title}</p>
-                      <p className="text-xs text-gray-600 truncate">{match.company}</p>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 group-hover:text-primary-600 transition-colors">{step.label}</p>
+                      <p className="text-xs text-gray-500">{step.hint}</p>
                     </div>
-                    <Button variant="outline" size="sm">View</Button>
+                    <span className="text-gray-300 group-hover:text-primary-400 transition-colors">→</span>
                   </Link>
                 ))}
               </div>
             </Card>
-          )}
 
-          {/* Empty state — no matches */}
-          {jobMatches.length === 0 && totalApps > 0 && (
-            <Card className="p-6">
-              <div className="text-center py-4">
-                <div className="w-10 h-10 rounded-full bg-[#F5EDE4] border border-[#E8DDD1] flex items-center justify-center mx-auto mb-3">
-                  <svg className="size-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                  </svg>
+            {upcoming.length > 0 && (
+              <Card>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-base font-semibold text-gray-900">Next Interview</h2>
+                  <Link to="/interview-schedule"><Button variant="ghost" size="sm">All</Button></Link>
                 </div>
-                <p className="text-sm font-medium text-gray-900 mb-1">No job matches yet</p>
-                <p className="text-xs text-gray-500 mb-3">Upload your resume and search for jobs to get AI-powered match scores.</p>
-                <Link to="/jobs">
-                  <Button size="sm">Search Jobs</Button>
-                </Link>
-              </div>
-            </Card>
-          )}
-        </div>
-
-        {/* Right column — interviews, actions, searches */}
-        <div className="space-y-6">
-          {/* Upcoming interviews */}
-          <Card>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-semibold text-gray-900">Upcoming Interviews</h2>
-              <Link to="/interview-schedule">
-                <Button variant="ghost" size="sm">View All</Button>
-              </Link>
-            </div>
-            {upcoming.length === 0 ? (
-              <div className="text-center py-8">
-                <div className="w-10 h-10 rounded-full bg-[#F5EDE4] border border-[#E8DDD1] flex items-center justify-center mx-auto mb-3">
-                  <svg className="size-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                  </svg>
-                </div>
-                <p className="text-sm font-medium text-gray-900 mb-1">No upcoming interviews</p>
-                <p className="text-xs text-gray-500 mb-3">When you schedule interviews, they'll appear here.</p>
-                <Link to="/interview-schedule">
-                  <Button variant="outline" size="sm">Schedule Interview</Button>
-                </Link>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {upcoming.map((interview: InterviewScheduleEntry) => (
-                  <div key={interview.id} className="p-3 border border-[#E8DDD1] rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">{interview.company}</p>
-                        <p className="text-xs text-gray-600 truncate">{interview.role}</p>
-                      </div>
-                      <div className="text-right shrink-0 ml-3">
-                        <p className="text-xs font-medium text-gray-900">
-                          {new Date(interview.scheduledAt).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
-                        </p>
-                        <p className="text-[10px] text-gray-500">
-                          {new Date(interview.scheduledAt).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
-                        </p>
-                      </div>
+                {(() => {
+                  const next = upcoming[0];
+                  const when = new Date(next.scheduledAt);
+                  return (
+                    <div className="p-3 border border-[#E8DDD1] rounded-lg bg-[#FFFBF5]">
+                      <p className="text-sm font-medium text-gray-900">{next.companyName}</p>
+                      <p className="text-xs text-gray-600">{next.roleTitle}</p>
+                      <p className="text-xs text-gray-900 font-medium mt-2">
+                        {when.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })} ·{" "}
+                        {when.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}
+                      </p>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  );
+                })()}
+              </Card>
             )}
-          </Card>
-
-          {/* Quick actions */}
-          <Card>
-            <h2 className="text-base font-semibold text-gray-900 mb-4">Quick Actions</h2>
-            <div className="space-y-2">
-              {[
-                { to: "/jobs", label: "Search Jobs", icon: "M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" },
-                { to: "/resumes", label: "My Resumes", icon: "M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" },
-                { to: "/interview-prep", label: "Interview Prep", icon: "M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" },
-                { to: "/offers", label: "Track Offers", icon: "M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.504-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M18.75 4.236c.982.143 1.954.317 2.916.52A6.003 6.003 0 0016.27 9.728M18.75 4.236V4.5c0 2.108-.966 3.99-2.48 5.228m0 0a6.023 6.023 0 01-2.77.665 6.023 6.023 0 01-2.77-.665" },
-              ].map((action) => (
-                <Link key={action.to} to={action.to}>
-                  <Button variant="outline" className="w-full justify-start gap-3">
-                    <svg className="size-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={action.icon} />
-                    </svg>
-                    {action.label}
-                  </Button>
-                </Link>
-              ))}
-            </div>
-          </Card>
-
-          {/* Saved searches */}
-          {savedSearches.length > 0 && (
-            <Card>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-semibold text-gray-900">Saved Searches</h2>
-                <Link to="/saved-searches">
-                  <Button variant="ghost" size="sm">Manage</Button>
-                </Link>
-              </div>
-              <div className="space-y-2">
-                {savedSearches.slice(0, 3).map((search: SavedSearch) => (
-                  <Link key={search.id} to="/saved-searches" className="block p-3 border border-[#E8DDD1] rounded-lg hover:bg-[#FFFBF5] transition-colors">
-                    <p className="text-sm font-medium text-gray-900 truncate">{search.name}</p>
-                    <p className="text-xs text-gray-600">{search.keywords} · {search.frequency}</p>
-                  </Link>
-                ))}
-              </div>
-            </Card>
-          )}
-
-          {/* Resumes */}
-          {resumes.length > 0 && (
-            <Card>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-semibold text-gray-900">Your Resumes</h2>
-                <Link to="/resumes">
-                  <Button variant="ghost" size="sm">Manage</Button>
-                </Link>
-              </div>
-              <div className="space-y-2">
-                {resumes.slice(0, 3).map((resume: Resume) => (
-                  <Link key={resume.id} to={`/resumes/${resume.id}`} className="block p-3 border border-[#E8DDD1] rounded-lg hover:bg-[#FFFBF5] transition-colors">
-                    <p className="text-sm font-medium text-gray-900 truncate">{resume.jobTitle}</p>
-                    <p className="text-xs text-gray-600">{resume.companyName || "General"} · Updated {new Date(resume.updatedAt).toLocaleDateString()}</p>
-                  </Link>
-                ))}
-              </div>
-            </Card>
-          )}
-
-          {/* Empty state — no resumes */}
-          {resumes.length === 0 && (
-            <Card className="p-5">
-              <div className="text-center py-4">
-                <div className="w-10 h-10 rounded-full bg-[#F5EDE4] border border-[#E8DDD1] flex items-center justify-center mx-auto mb-3">
-                  <svg className="size-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                  </svg>
-                </div>
-                <p className="text-sm font-medium text-gray-900 mb-1">No resumes yet</p>
-                <p className="text-xs text-gray-500 mb-3">Upload or generate a resume to start your traverse.</p>
-                <Link to="/resumes">
-                  <Button size="sm">Upload Resume</Button>
-                </Link>
-              </div>
-            </Card>
-          )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

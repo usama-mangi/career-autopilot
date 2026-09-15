@@ -106,6 +106,38 @@ export const OFFER_STATUS_CONFIG: Record<OfferStatus, StatusConfig> = {
   },
 };
 
+/**
+ * The active pipeline is a journey, not a board: five ordered stages a job
+ * moves through while it is live. Closed outcomes live in the archive so the
+ * board only ever shows the six columns a user acts on, never eight.
+ */
+export const ACTIVE_STAGES: ApplicationStatus[] = [
+  "draft",
+  "applied",
+  "phone_screen",
+  "interviewing",
+  "offer",
+];
+
+/** Terminal statuses that leave the active board and move to the archive. */
+export const CLOSED_STATUSES: ApplicationStatus[] = ["rejected", "accepted", "withdrawn"];
+
+export function isClosedStatus(status: string): boolean {
+  return CLOSED_STATUSES.includes(status as ApplicationStatus);
+}
+
+/** Short "what happens here" hint shown under each stage lane. */
+export const STAGE_HINTS: Record<ApplicationStatus, string> = {
+  draft: "Tailor resume & cover letter",
+  applied: "Waiting to hear back",
+  phone_screen: "First conversation",
+  interviewing: "Rounds in progress",
+  offer: "Evaluate & negotiate",
+  rejected: "",
+  accepted: "",
+  withdrawn: "",
+};
+
 export const PIPELINE_STATUSES: ApplicationStatus[] = [
   "draft",
   "applied",
@@ -124,9 +156,11 @@ export function getNextStatuses(current: ApplicationStatus): ApplicationStatus[]
     phone_screen: ["interviewing", "rejected", "withdrawn"],
     interviewing: ["offer", "rejected", "withdrawn"],
     offer: ["accepted", "rejected", "withdrawn"],
-    rejected: [],
+    // Reopen paths so rejected/withdrawn jobs are not dead ends — reapplying
+    // or returning to a role months later is a normal part of a job hunt.
+    rejected: ["applied", "withdrawn"],
+    withdrawn: ["applied"],
     accepted: [],
-    withdrawn: [],
   };
   return transitions[current] || [];
 }

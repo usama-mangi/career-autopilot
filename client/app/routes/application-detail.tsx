@@ -1,4 +1,4 @@
-import type { JobApplication, CommunicationLog, ReferralRequest } from "types";
+import type { JobApplication, CommunicationLog, ReferralRequest, OfferComparisonRow, NegotiationCoach, First90DaysTracker, InterviewScheduleEntry, InterviewNote } from "types";
 import { Link, useParams, useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import { useSession } from "~/lib/auth-store";
@@ -22,10 +22,25 @@ const STATUS_TRANSITIONS: Record<string, string[]> = {
   phone_screen: ["interviewing", "rejected", "withdrawn"],
   interviewing: ["offer", "rejected", "withdrawn"],
   offer: ["accepted", "rejected", "withdrawn"],
-  rejected: [],
+  rejected: ["applied", "withdrawn"],
+  withdrawn: ["applied"],
   accepted: [],
-  withdrawn: [],
 };
+
+/** Ordered lifecycle the detail header shows as a progress strip. */
+const LIFECYCLE_STAGES = ["draft", "applied", "phone_screen", "interviewing", "offer"];
+const STAGE_LABELS: Record<string, string> = {
+  draft: "Draft",
+  applied: "Applied",
+  phone_screen: "Screen",
+  interviewing: "Interview",
+  offer: "Offer",
+};
+
+function stageIndex(status: string): number {
+  if (status === "accepted") return LIFECYCLE_STAGES.length; // accepted = reached the end
+  return LIFECYCLE_STAGES.indexOf(status);
+}
 
 const COMM_TYPES = [
   { value: "email", label: "Email" },
@@ -38,6 +53,187 @@ const COMM_TYPES = [
 ];
 
 const REFERRAL_STATUSES = ["not_requested", "requested", "agreed", "declined", "submitted"];
+
+const stageParams = (applicationId: string, companyName: string, roleTitle: string) =>
+  new URLSearchParams({ applicationId, company: companyName, role: roleTitle }).toString();
+
+interface StageToolkitProps {
+  appId: string;
+  companyName: string;
+  roleTitle: string;
+  status: string;
+  artifacts: {
+    schedules: InterviewScheduleEntry[];
+    notes: InterviewNote[];
+    comparisons: OfferComparisonRow[];
+    coaches: NegotiationCoach[];
+    trackers: First90DaysTracker[];
+  } | null;
+}
+
+const OFFER_STAGES = new Set(["offer", "accepted"]);
+
+const NOTE_TYPE_LABELS: Record<string, string> = {
+  phone_screen: "Phone screen",
+  technical: "Technical",
+  behavioral: "Behavioral",
+  panel: "Panel",
+  onsite: "On-site",
+  virtual: "Virtual",
+  other: "Interview",
+};
+
+const SCHEDULE_STATUS_LABELS: Record<string, string> = {
+  scheduled: "Scheduled",
+  completed: "Completed",
+  cancelled: "Cancelled",
+  rescheduled: "Rescheduled",
+};
+
+function formatDay(d: string) {
+  return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+/**
+ * The stage toolkit: every artifact this application has generated, or a
+ * create prompt for each one that's missing — matched to the stage. Draft and
+ * applied get prep notes; screen/interviewing add the interview schedule and
+ * notes; offer/accepted show the offer toolkit.
+ */
+function StageToolkit({ appId, companyName, roleTitle, status, artifacts }: StageToolkitProps) {
+  const params = stageParams(appId, companyName, roleTitle);
+  const loaded = artifacts !== null;
+  const schedules = artifacts?.schedules ?? [];
+  const notes = artifacts?.notes ?? [];
+  const comparisons = artifacts?.comparisons ?? [];
+  const coaches = artifacts?.coaches ?? [];
+  const trackers = artifacts?.trackers ?? [];
+
+  const rows: Array<{
+    key: string;
+    icon: string;
+    label: string;
+    hint: string;
+    items: Array<{ id: string; title: string; to: string }>;
+    createTo: string;
+  }> = [];
+  if (status === "phone_screen" || status === "interviewing") {
+    rows.push({
+      key: "interview",
+      icon: "📅",
+      label: "Interview schedule",
+      hint: "Every round, tracked in one place",
+      items: schedules.map((s) => ({
+        id: s.id,
+        title: `${formatDay(s.scheduledAt)} · ${SCHEDULE_STATUS_LABELS[s.status] ?? s.status}`,
+        to: `/interview-schedule?schedule=${s.id}`,
+      })),
+      createTo: `/interview-schedule?${params}`,
+    });
+  }
+  if (!OFFER_STAGES.has(status)) {
+    rows.push({
+      key: "notes",
+      icon: "📝",
+      label: "Interview notes",
+      hint: status === "draft" || status === "applied"
+        ? "Capture prep and early conversations"
+        : "What you were asked and how it went",
+      items: notes.map((n) => ({
+        id: n.id,
+        title: `Round ${n.roundNumber} — ${NOTE_TYPE_LABELS[n.interviewType] ?? n.interviewType}`,
+        to: `/interview-notes?note=${n.id}`,
+      })),
+      createTo: `/interview-notes?${params}`,
+    });
+  }
+  if (OFFER_STAGES.has(status)) {
+    rows.push(
+    {
+      key: "compare",
+      icon: "⚖️",
+      label: "Offer comparison",
+      hint: "Weigh this offer against your others",
+      items: comparisons.map((c) => ({ id: c.id, title: c.name, to: `/offers/compare?comparison=${c.id}` })),
+      createTo: `/offers/compare?${params}`,
+    },
+    {
+      key: "coach",
+      icon: "💬",
+      label: "Negotiation coach",
+      hint: "Strategy, scripts, and email templates",
+      items: coaches.map((c) => ({ id: c.id, title: `${c.companyName} — ${c.roleTitle} strategy`, to: `/offers/negotiate/${c.id}` })),
+      createTo: `/offers/negotiate?${params}`,
+    },
+    {
+      key: "plan",
+      icon: "🎉",
+      label: "First 90 days",
+      hint: "Milestones for your first three months",
+      items: trackers.map((t) => ({ id: t.id, title: `${t.companyName} — ${t.roleTitle}`, to: `/onboarding/first-90-days/${t.id}` })),
+      createTo: `/onboarding/first-90-days?${params}`,
+    },
+    );
+  }
+
+  return (
+    <div className="mt-4 rounded-xl border border-[#E8DDD1] bg-[#FFFBF5] p-4">
+      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+        {status === "accepted"
+          ? "Offer toolkit"
+          : status === "offer"
+            ? "You have an offer — work it"
+            : status === "interviewing" || status === "phone_screen"
+              ? "Interview toolkit"
+              : "Prepare for this application"}
+      </p>
+      <div className={rows.length > 2 ? "grid gap-3 sm:grid-cols-3" : "grid gap-3 sm:grid-cols-2"}>
+        {rows.map((row) => {
+          const hasItems = row.items.length > 0;
+          return (
+            <div key={row.key} className="rounded-lg border border-[#E8DDD1] bg-white p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <span aria-hidden="true">{row.icon}</span>
+                <p className="text-sm font-medium text-gray-900">{row.label}</p>
+              </div>
+              <p className="text-[11px] text-gray-500 mb-2">{row.hint}</p>
+              {loaded && hasItems && (
+                <div className="space-y-1">
+                  {row.items.map((item) => (
+                    <Link
+                      key={item.id}
+                      to={item.to}
+                      className="block text-xs font-medium text-primary-600 hover:underline truncate"
+                    >
+                      → {item.title}
+                    </Link>
+                  ))}
+                </div>
+              )}
+              {loaded && !hasItems ? (
+                <Link
+                  to={row.createTo}
+                  className="inline-flex items-center gap-1 text-xs font-medium text-primary-600 border border-primary-200 rounded-lg px-2 py-1 hover:bg-primary-50 transition"
+                >
+                  + Create
+                </Link>
+              ) : loaded ? (
+                <Link
+                  to={row.createTo}
+                  className="inline-flex items-center gap-1 text-[11px] text-gray-400 hover:text-primary-600 transition"
+                >
+                  + Add another
+                </Link>
+              ) : (
+                <span className="inline-block h-4 w-24 bg-gray-100 rounded animate-pulse" />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export default function ApplicationDetail() {
   const { id } = useParams();
@@ -64,10 +260,47 @@ export default function ApplicationDetail() {
   const [showRefForm, setShowRefForm] = useState(false);
   const [refForm, setRefForm] = useState({ employeeName: "", employeeEmail: "", relationship: "", status: "requested", notes: "" });
 
+  // Artifacts linked to this application, for the stage toolkit. Fetched for
+  // every open stage: interview schedule + notes before the offer, offer
+  // artifacts at offer/accepted. Each list is best-effort — a failed list
+  // degrades to "create the first one" prompts rather than breaking the page.
+  const [artifacts, setArtifacts] = useState<{
+    schedules: InterviewScheduleEntry[];
+    notes: InterviewNote[];
+    comparisons: OfferComparisonRow[];
+    coaches: NegotiationCoach[];
+    trackers: First90DaysTracker[];
+  } | null>(null);
+
   useEffect(() => {
     if (!isPending && !isAuthenticated) { navigate("/login"); return; }
     if (isAuthenticated && id) loadData();
   }, [isAuthenticated, isPending, id, navigate]);
+
+  useEffect(() => {
+    if (!app || !id) return;
+    if (app.status === "rejected" || app.status === "withdrawn") return;
+    let cancelled = false;
+    Promise.all([
+      api.interviewPrep.listSchedule().catch(() => [] as InterviewScheduleEntry[]),
+      api.interviewProcess.listNotes().catch(() => [] as InterviewNote[]),
+      api.offerNegotiation.listComparisons().catch(() => [] as OfferComparisonRow[]),
+      api.offerNegotiation.listCoaches().catch(() => [] as NegotiationCoach[]),
+      api.postOnboarding.listTrackers().catch(() => [] as First90DaysTracker[]),
+    ]).then(([schedules, notes, comparisons, coaches, trackers]) => {
+      if (cancelled) return;
+      setArtifacts({
+        schedules: schedules.filter((s) => s.applicationId === id),
+        notes: notes.filter((n) => n.applicationId === id),
+        comparisons: comparisons.filter((c) => c.applicationId === id),
+        coaches: coaches.filter((c) => c.applicationId === id),
+        trackers: trackers.filter((t) => t.applicationId === id),
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [app, id]);
 
   async function loadData() {
     try {
@@ -218,7 +451,41 @@ export default function ApplicationDetail() {
               <div>
                 <h1 className="text-xl font-bold text-gray-900">{app.companyName}</h1>
                 <p className="text-gray-500 mt-0.5">{app.roleTitle}</p>
-                <div className="flex items-center gap-3 mt-2 text-sm text-gray-400">
+                {/* Lifecycle strip: where this job sits in the journey */}
+                <div className="flex items-center gap-1.5 mt-3" aria-label="Application stage">
+                  {LIFECYCLE_STAGES.map((stage, idx) => {
+                    const current = stageIndex(app.status);
+                    const isDone = idx < current || app.status === "accepted";
+                    const isCurrent = idx === current || (app.status === "accepted" && stage === "offer");
+                    const closed = app.status === "rejected" || app.status === "withdrawn";
+                    const stageCfg = STATUS_CONFIG[stage];
+                    return (
+                      <div key={stage} className="flex items-center gap-1.5">
+                        {idx > 0 && <span className={`w-4 h-px ${isDone ? "bg-primary-400" : "bg-gray-200"}`} aria-hidden="true" />}
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[11px] font-medium border ${
+                            isCurrent && !closed
+                              ? `${stageCfg.bgColor} ${stageCfg.color} border-current/30 ring-2 ring-primary-100`
+                              : isDone
+                                ? "bg-primary-50 text-primary-600 border-primary-100"
+                                : "bg-gray-50 text-gray-400 border-gray-200"
+                          }`}
+                        >
+                          {STAGE_LABELS[stage]}
+                        </span>
+                      </div>
+                    );
+                  })}
+                  {(app.status === "rejected" || app.status === "withdrawn") && (
+                    <span className={`ml-1 px-2 py-0.5 rounded-full text-[11px] font-medium border ${STATUS_CONFIG[app.status].bgColor} ${STATUS_CONFIG[app.status].color}`}>
+                      {STATUS_CONFIG[app.status].label}
+                    </span>
+                  )}
+                  {app.status === "accepted" && (
+                    <span className="ml-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-green-50 text-green-700 border border-green-200">Accepted 🎉</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-3 mt-3 text-sm text-gray-400">
                   <span>Created {formatDate(app.createdAt)}</span>
                   {app.appliedAt && <span>Applied {formatDate(app.appliedAt)}</span>}
                   {app.job?.source && <span>via {app.job.source}</span>}
@@ -232,9 +499,7 @@ export default function ApplicationDetail() {
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                 </button>
               </div>
-            </div>
-
-            {STATUS_TRANSITIONS[app.status].length > 0 && (
+            </div>            {STATUS_TRANSITIONS[app.status].length > 0 && (
               <div className="flex gap-2 mt-4">
                 {STATUS_TRANSITIONS[app.status].map((s) => (
                   <button
@@ -243,6 +508,7 @@ export default function ApplicationDetail() {
                     className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition hover:opacity-80 ${
                       s === "accepted" ? "bg-green-50 text-green-700 border-green-200" :
                       s === "rejected" ? "bg-red-50 text-red-700 border-red-200" :
+                      s === "withdrawn" ? "bg-gray-50 text-gray-600 border-gray-200" :
                       "bg-blue-50 text-blue-700 border-blue-200"
                     }`}
                   >
@@ -250,6 +516,28 @@ export default function ApplicationDetail() {
                   </button>
                 ))}
               </div>
+            )}
+
+            {/* Cross-stage actions: the next step of the journey, one click away */}
+            <div className="flex flex-wrap gap-2 mt-4">
+              {app.jobId && (
+                <Link
+                  to={`/jobs/${app.jobId}`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 transition"
+                >
+                  View job posting
+                </Link>
+              )}
+            </div>
+
+            {(app.status !== "rejected" && app.status !== "withdrawn") && (
+              <StageToolkit
+                appId={app.id}
+                companyName={app.companyName}
+                roleTitle={app.roleTitle}
+                status={app.status}
+                artifacts={artifacts}
+              />
             )}
 
             {/* AI Tool CTAs */}

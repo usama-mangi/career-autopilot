@@ -41,6 +41,7 @@ export class OfferNegotiationService {
     name: string;
     offers: OfferItem[];
     weights?: OfferComparisonItem['weights'];
+    applicationId?: string;
   }) {
     const parsed = await withAiGateway('OfferNegotiationService.createComparison', async () => {
       const result = await this.aiService.chat(
@@ -64,9 +65,20 @@ export class OfferNegotiationService {
       }>(this.aiService.getResponseText(result));
     });
 
+    // Link the comparison back to the application it came from when provided.
+    // Ownership is implied by userId, but the FK must actually resolve.
+    if (data.applicationId) {
+      const app = await this.prisma.jobApplication.findFirst({
+        where: { id: data.applicationId, userId },
+        select: { id: true },
+      });
+      if (!app) throw new NotFoundException('Application not found');
+    }
+
     return this.prisma.offerComparison.create({
       data: {
         userId,
+        applicationId: data.applicationId || null,
         name: data.name,
         offers: data.offers as any,
         weights: data.weights || { compensation: 30, growth: 20, culture: 20, workLifeBalance: 15, location: 10, benefits: 5 },
@@ -80,11 +92,15 @@ export class OfferNegotiationService {
     return this.prisma.offerComparison.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
+      include: { application: { select: { id: true, companyName: true, roleTitle: true, status: true } } },
     });
   }
 
   async getComparison(userId: string, id: string) {
-    const comp = await this.prisma.offerComparison.findFirst({ where: { id, userId } });
+    const comp = await this.prisma.offerComparison.findFirst({
+      where: { id, userId },
+      include: { application: { select: { id: true, companyName: true, roleTitle: true, status: true } } },
+    });
     if (!comp) throw new NotFoundException('Offer comparison not found');
     return comp;
   }
@@ -119,6 +135,16 @@ export class OfferNegotiationService {
       resumeText: data.resumeText,
       offerDetails: data.offerDetails,
     });
+
+    // Link the coach session back to the application it came from when
+    // provided. Ownership is implied by userId, but the FK must resolve.
+    if (data.applicationId) {
+      const app = await this.prisma.jobApplication.findFirst({
+        where: { id: data.applicationId, userId },
+        select: { id: true },
+      });
+      if (!app) throw new NotFoundException('Application not found');
+    }
 
     const parsed = await withAiGateway('OfferNegotiationService.createCoach', async () => {
       const result = await this.aiService.chat(
@@ -156,12 +182,15 @@ export class OfferNegotiationService {
     return this.prisma.negotiationCoach.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
-      select: { id: true, companyName: true, roleTitle: true, createdAt: true },
+      include: { application: { select: { id: true, companyName: true, roleTitle: true, status: true } } },
     });
   }
 
   async getCoach(userId: string, id: string) {
-    const coach = await this.prisma.negotiationCoach.findFirst({ where: { id, userId } });
+    const coach = await this.prisma.negotiationCoach.findFirst({
+      where: { id, userId },
+      include: { application: { select: { id: true, companyName: true, roleTitle: true, status: true } } },
+    });
     if (!coach) throw new NotFoundException('Negotiation coach not found');
     return coach;
   }

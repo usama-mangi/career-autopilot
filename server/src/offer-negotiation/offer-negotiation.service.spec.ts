@@ -131,4 +131,143 @@ describe('OfferNegotiationService AI gateway mapping', () => {
 
     await expect(svc.getComparison('u1', 'missing')).rejects.toMatchObject({ status: 404 });
   });
+
+  describe('application link', () => {
+    const appRef = { jobApplication: { findFirst: vi.fn().mockResolvedValue({ id: 'a1' }) } };
+
+    it('createComparison persists applicationId when the application belongs to the user', async () => {
+      const prisma = {
+        ...appRef,
+        jobApplication: { findFirst: vi.fn().mockResolvedValue({ id: 'a1' }) },
+        offerComparison: { create: vi.fn().mockResolvedValue({ id: 'c1' }) },
+      };
+      const svc = makeService(prisma, makeAi({ scores: [], recommendation: 'ok' }));
+
+      await svc.createComparison('u1', {
+        name: 'A vs B',
+        offers: [],
+        applicationId: 'a1',
+      });
+
+      expect(prisma.jobApplication.findFirst).toHaveBeenCalledWith({
+        where: { id: 'a1', userId: 'u1' },
+        select: { id: true },
+      });
+      expect(prisma.offerComparison.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ userId: 'u1', applicationId: 'a1' }),
+      });
+    });
+
+    it('createComparison rejects an applicationId owned by someone else', async () => {
+      const prisma = {
+        jobApplication: { findFirst: vi.fn().mockResolvedValue(null) },
+        offerComparison: { create: vi.fn() },
+      };
+      const svc = makeService(prisma, makeAi({ scores: [], recommendation: 'ok' }));
+
+      await expect(
+        svc.createComparison('u1', { name: 'A vs B', offers: [], applicationId: 'foreign' }),
+      ).rejects.toMatchObject({ status: 404 });
+      expect(prisma.offerComparison.create).not.toHaveBeenCalled();
+    });
+
+    it('createComparison stores null when no applicationId is given (back-compat)', async () => {
+      const prisma = { offerComparison: { create: vi.fn().mockResolvedValue({ id: 'c1' }) } };
+      const svc = makeService(prisma, makeAi({ scores: [], recommendation: 'ok' }));
+
+      await svc.createComparison('u1', { name: 'A vs B', offers: [] });
+
+      expect(prisma.offerComparison.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ applicationId: null }),
+      });
+    });
+
+    it('listComparisons includes the linked application summary', async () => {
+      const prisma = { offerComparison: { findMany: vi.fn().mockResolvedValue([]) } };
+      const svc = makeService(prisma, makeAi());
+
+      await svc.listComparisons('u1');
+
+      expect(prisma.offerComparison.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          include: { application: { select: { id: true, companyName: true, roleTitle: true, status: true } } },
+        }),
+      );
+    });
+
+    it('createCoach persists applicationId when the application belongs to the user', async () => {
+      const prisma = {
+        jobApplication: { findFirst: vi.fn().mockResolvedValue({ id: 'a1' }) },
+        negotiationCoach: { create: vi.fn().mockResolvedValue({ id: 'nc1' }) },
+      };
+      const svc = makeService(prisma, makeAi({ marketData: {}, strategy: {}, emailTemplates: [], scripts: [] }));
+
+      await svc.createCoach('u1', {
+        companyName: 'Acme',
+        roleTitle: 'SWE',
+        offerDetails: { baseSalary: 100 },
+        applicationId: 'a1',
+      });
+
+      expect(prisma.jobApplication.findFirst).toHaveBeenCalledWith({
+        where: { id: 'a1', userId: 'u1' },
+        select: { id: true },
+      });
+      expect(prisma.negotiationCoach.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ userId: 'u1', applicationId: 'a1' }),
+      });
+    });
+
+    it('createCoach rejects an applicationId owned by someone else', async () => {
+      const prisma = {
+        jobApplication: { findFirst: vi.fn().mockResolvedValue(null) },
+        negotiationCoach: { create: vi.fn() },
+      };
+      const svc = makeService(prisma, makeAi());
+
+      await expect(
+        svc.createCoach('u1', {
+          companyName: 'Acme',
+          roleTitle: 'SWE',
+          offerDetails: { baseSalary: 100 },
+          applicationId: 'foreign',
+        }),
+      ).rejects.toMatchObject({ status: 404 });
+      expect(prisma.negotiationCoach.create).not.toHaveBeenCalled();
+      expect(prisma.jobApplication.findFirst).toHaveBeenCalledWith({
+        where: { id: 'foreign', userId: 'u1' },
+        select: { id: true },
+      });
+    });
+
+    it('createCoach does not hit the applications table when no applicationId is given', async () => {
+      const jobApplication = { findFirst: vi.fn() };
+      const prisma = { jobApplication, negotiationCoach: { create: vi.fn().mockResolvedValue({ id: 'nc1' }) } };
+      const svc = makeService(prisma, makeAi({ marketData: {}, strategy: {}, emailTemplates: [], scripts: [] }));
+
+      await svc.createCoach('u1', {
+        companyName: 'Acme',
+        roleTitle: 'SWE',
+        offerDetails: { baseSalary: 100 },
+      });
+
+      expect(jobApplication.findFirst).not.toHaveBeenCalled();
+      expect(prisma.negotiationCoach.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ applicationId: null }),
+      });
+    });
+
+    it('listCoaches includes the linked application summary', async () => {
+      const prisma = { negotiationCoach: { findMany: vi.fn().mockResolvedValue([]) } };
+      const svc = makeService(prisma, makeAi());
+
+      await svc.listCoaches('u1');
+
+      expect(prisma.negotiationCoach.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          include: { application: { select: { id: true, companyName: true, roleTitle: true, status: true } } },
+        }),
+      );
+    });
+  });
 });

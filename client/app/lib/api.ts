@@ -63,7 +63,7 @@ import type {
   NetworkMap, 
   NetworkMapCreateRequest, 
   OfferComparisonCreateRequest, 
-  OfferComparisonItem, 
+  OfferComparisonRow, 
   OfferComparisonUpdateRequest, 
   OfferDecision, 
   OnboardingChecklist, 
@@ -731,7 +731,7 @@ export const api = {
       if (params?.page) sp.set('page', String(params.page));
       if (params?.limit) sp.set('limit', String(params.limit));
       const query = sp.toString();
-      return request<{ applications: Array<{ id: string; companyName: string; roleTitle: string; status: string; appliedAt?: string; company?: { name: string } }>; pagination: { page: number; limit: number; total: number; totalPages: number } }>(
+      return request<{ applications: Array<{ id: string; companyName: string; roleTitle: string; status: string; appliedAt?: string; jobId?: string; company?: { name: string } }>; pagination: { page: number; limit: number; total: number; totalPages: number } }>(
         `/api/applications${query ? `?${query}` : ''}`,
         { deduplicate: true },
       );
@@ -1194,38 +1194,38 @@ export const api = {
   offerNegotiation: {
     // Offer Comparison
     createComparison: (body: OfferComparisonCreateRequest) =>
-      request<OfferComparisonItem>('/api/offer-negotiation/comparisons', {
+      request<OfferComparisonRow>('/api/offer-negotiation/comparisons', {
         method: 'POST',
         body: JSON.stringify(body),
       }),
 
-    listComparisons: () => request<OfferComparisonItem[]>('/api/offer-negotiation/comparisons', { deduplicate: true }),
+    listComparisons: () => request<OfferComparisonRow[]>('/api/offer-negotiation/comparisons', { deduplicate: true }),
 
-    getComparison: (id: string) => request<OfferComparisonItem>(`/api/offer-negotiation/comparisons/${id}`, { deduplicate: true }),
+    getComparison: (id: string) => request<OfferComparisonRow>(`/api/offer-negotiation/comparisons/${id}`, { deduplicate: true }),
 
     deleteComparison: (id: string) =>
       request<void>(`/api/offer-negotiation/comparisons/${id}`, { method: 'DELETE' }),
 
     updateComparison: (id: string, body: OfferComparisonUpdateRequest) =>
-      request<OfferComparisonItem>(`/api/offer-negotiation/comparisons/${id}`, {
+      request<OfferComparisonRow>(`/api/offer-negotiation/comparisons/${id}`, {
         method: 'PATCH',
         body: JSON.stringify(body),
       }),
 
     // Negotiation Coach
     createCoach: (body: NegotiationCoachCreateRequest) =>
-      request<NegotiationCoach>('/api/offer-negotiation/coach', {
+      request<NegotiationCoach>('/api/offer-negotiation/coaches', {
         method: 'POST',
         body: JSON.stringify(body),
         timeout: 30000,
       }),
 
-    listCoaches: () => request<NegotiationCoach[]>('/api/offer-negotiation/coach', { deduplicate: true }),
+    listCoaches: () => request<NegotiationCoach[]>('/api/offer-negotiation/coaches', { deduplicate: true }),
 
-    getCoach: (id: string) => request<NegotiationCoach>(`/api/offer-negotiation/coach/${id}`, { deduplicate: true }),
+    getCoach: (id: string) => request<NegotiationCoach>(`/api/offer-negotiation/coaches/${id}`, { deduplicate: true }),
 
     deleteCoach: (id: string) =>
-      request<void>(`/api/offer-negotiation/coach/${id}`, { method: 'DELETE' }),
+      request<void>(`/api/offer-negotiation/coaches/${id}`, { method: 'DELETE' }),
 
     // Equity Calculator
     calculateEquity: (body: EquityCalculationRequest) =>

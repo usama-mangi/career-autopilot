@@ -44,6 +44,7 @@ export default [
     route("/offers", "routes/offers.tsx"),
     route("/offers/compare", "routes/offer-comparison.tsx"),
     route("/offers/negotiate", "routes/salary-negotiation.tsx"),
+    route("/offers/negotiate/:id", "routes/offers.negotiate.$id.tsx"),
     route("/offers/equity", "routes/equity-calculator.tsx"),
     route("/offers/benefits", "routes/benefits-analyzer.tsx"),
     route("/offers/decide", "routes/decision-framework.tsx"),
@@ -81,6 +82,7 @@ export default [
     route("/onboarding/network-map", "routes/network-map.tsx"),
     route("/onboarding/skill-refresh", "routes/skill-refresh.tsx"),
     route("/onboarding/first-90-days", "routes/first-90-days.tsx"),
+    route("/onboarding/first-90-days/:id", "routes/onboarding.first-90-days.$id.tsx"),
     route("/follow-up-emails", "routes/follow-up-emails.tsx"),
   ]),
 ] satisfies RouteConfig;

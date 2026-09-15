@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { cn } from "~/lib/utils";
@@ -15,8 +15,10 @@ export default function OfferComparison() {
   const isAuthenticated = !!session;
   const navigate = useNavigate();
   const { success: toastSuccess, error: toastError } = useToastHelpers();
+  const [searchParams] = useSearchParams();
 
   const [comparisons, setComparisons] = useState<any[]>([]);
+  const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingComparison, setEditingComparison] = useState<any | null>(null);
@@ -27,6 +29,7 @@ export default function OfferComparison() {
 
   const [formData, setFormData] = useState({
     name: "",
+    applicationId: "",
     offers: [] as { name: string; baseSalary: number; equity: number; bonus: number; location: string; remotePolicy: string; benefits: string; pto: number; growthOpportunities: number; companyCulture: number }[],
     criteria: [] as { name: string; weight: number }[],
   });
@@ -36,8 +39,48 @@ export default function OfferComparison() {
   }, [isPending, isAuthenticated]);
 
   useEffect(() => {
-    if (isAuthenticated) loadComparisons();
+    if (isAuthenticated) {
+      loadComparisons();
+      loadApplications();
+    }
   }, [isAuthenticated]);
+
+  async function loadApplications() {
+    try {
+      const data = await api.applications.list({ limit: 100 });
+      setApplications(data.applications || []);
+    } catch {
+      // The selector stays empty; linking an offer to an application is optional.
+    }
+  }
+
+  // Arriving from an application ("Compare offers" link) pre-fills the name
+  // and links the new comparison back to that application.
+  useEffect(() => {
+    const applicationId = searchParams.get("applicationId");
+    if (applicationId) {
+      const company = searchParams.get("company") || "";
+      const role = searchParams.get("role") || "";
+      setFormData((prev) => ({
+        ...prev,
+        applicationId,
+        name: prev.name || (company && role ? `${company} offer` : ""),
+        offers: prev.offers.map((o, i) => (i === 0 ? { ...o, name: o.name || company } : o)),
+      }));
+      setShowForm(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Deep link from the Offers hub ("Open"/"Compare" on a card): expand that
+  // comparison once its data is loaded.
+  useEffect(() => {
+    const comparisonId = searchParams.get("comparison");
+    if (comparisonId && !loading) {
+      setViewingComparison(comparisonId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
 
   async function loadComparisons() {
     try {
@@ -53,6 +96,7 @@ export default function OfferComparison() {
   function resetForm() {
     setFormData({
       name: "",
+      applicationId: "",
       offers: [{ name: "", baseSalary: 0, equity: 0, bonus: 0, location: "", remotePolicy: "", benefits: "", pto: 0, growthOpportunities: 0, companyCulture: 0 }],
       criteria: [{ name: "Compensation", weight: 30 }, { name: "Growth", weight: 20 }, { name: "Culture", weight: 15 }, { name: "Work-Life Balance", weight: 15 }, { name: "Mission", weight: 10 }, { name: "Location/Remote", weight: 10 }],
     });
@@ -128,7 +172,7 @@ export default function OfferComparison() {
     setGenerating(true);
     setError("");
     try {
-      const payload = { ...formData } as any;
+      const payload = { ...formData, applicationId: formData.applicationId || undefined } as any;
       if (editingComparison) {
         await api.offerNegotiation.updateComparison(editingComparison.id, payload);
         toastSuccess("Comparison updated");
@@ -200,7 +244,12 @@ export default function OfferComparison() {
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h3 className="font-semibold text-gray-900">{comparison.name}</h3>
-                    <p className="text-sm text-gray-500">{comparison.offers.length} offers · {comparison.criteria.length} criteria</p>
+                    <p className="text-sm text-gray-500">
+                      {comparison.offers.length} offers · {comparison.criteria.length} criteria
+                      {comparison.application && (
+                        <> · from <Link to={`/applications/${comparison.application.id}`} className="text-primary-600 hover:underline">{comparison.application.companyName} — {comparison.application.roleTitle}</Link></>
+                      )}
+                    </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setEditingComparison(comparison); setFormData({ ...comparison }); setShowForm(true); }}>Edit</Button>
@@ -301,6 +350,23 @@ export default function OfferComparison() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && <ErrorBanner error={error} className="mb-0" />}
           <Input label="Comparison Name" placeholder="e.g. Senior Engineer Offers - Q1 2025" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Linked application</label>
+            <select
+              value={formData.applicationId}
+              onChange={(e) => setFormData({ ...formData, applicationId: e.target.value })}
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+            >
+              <option value="">Not linked (standalone comparison)</option>
+              {applications.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.companyName} — {a.roleTitle}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">Linking keeps your offers connected to the job they came from.</p>
+          </div>
 
           <div>
             <div className="flex items-center justify-between mb-3">

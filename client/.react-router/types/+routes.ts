@@ -108,6 +108,11 @@ type Pages = {
   "/offers/negotiate": {
     params: {};
   };
+  "/offers/negotiate/:id": {
+    params: {
+      "id": string;
+    };
+  };
   "/offers/equity": {
     params: {};
   };
@@ -223,6 +228,11 @@ type Pages = {
   "/onboarding/first-90-days": {
     params: {};
   };
+  "/onboarding/first-90-days/:id": {
+    params: {
+      "id": string;
+    };
+  };
   "/follow-up-emails": {
     params: {};
   };
@@ -231,7 +241,7 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/login" | "/register" | "/auth" | "/share/:token" | "/onboarding" | "/dashboard" | "/jobs" | "/jobs/:id" | "/saved-searches" | "/job-alerts" | "/companies" | "/companies/:id" | "/applications" | "/applications/analytics" | "/applications/:id" | "/interview-prep" | "/interview-schedule" | "/interview-notes" | "/interviewer-feedback" | "/mock-interview" | "/technical-practice" | "/behavioral-bank" | "/interview-cheat-sheet" | "/panel-interview" | "/case-study" | "/interview-analytics" | "/offers" | "/offers/compare" | "/offers/negotiate" | "/offers/equity" | "/offers/benefits" | "/offers/decide" | "/offers/resign" | "/resumes" | "/resumes/new" | "/resumes/upload" | "/resumes/batch" | "/resumes/batch/:id" | "/resumes/:id" | "/resumes/:id/edit" | "/resumes/:id/cover-letter" | "/resumes/:id/skill-gap" | "/resumes/:id/interview-questions" | "/resumes/:id/salary-estimate" | "/resumes/:id/multi-jd" | "/resumes/:id/templates" | "/resumes/:id/tailored" | "/resumes/:id/versions" | "/cover-letter-templates" | "/linkedin-profile" | "/portfolio" | "/references" | "/profile" | "/wipe" | "/onboarding/plan" | "/onboarding/checklist" | "/onboarding/manager-alignment" | "/onboarding/network-map" | "/onboarding/skill-refresh" | "/onboarding/first-90-days" | "/follow-up-emails";
+    page: "/" | "/login" | "/register" | "/auth" | "/share/:token" | "/onboarding" | "/dashboard" | "/jobs" | "/jobs/:id" | "/saved-searches" | "/job-alerts" | "/companies" | "/companies/:id" | "/applications" | "/applications/analytics" | "/applications/:id" | "/interview-prep" | "/interview-schedule" | "/interview-notes" | "/interviewer-feedback" | "/mock-interview" | "/technical-practice" | "/behavioral-bank" | "/interview-cheat-sheet" | "/panel-interview" | "/case-study" | "/interview-analytics" | "/offers" | "/offers/compare" | "/offers/negotiate" | "/offers/negotiate/:id" | "/offers/equity" | "/offers/benefits" | "/offers/decide" | "/offers/resign" | "/resumes" | "/resumes/new" | "/resumes/upload" | "/resumes/batch" | "/resumes/batch/:id" | "/resumes/:id" | "/resumes/:id/edit" | "/resumes/:id/cover-letter" | "/resumes/:id/skill-gap" | "/resumes/:id/interview-questions" | "/resumes/:id/salary-estimate" | "/resumes/:id/multi-jd" | "/resumes/:id/templates" | "/resumes/:id/tailored" | "/resumes/:id/versions" | "/cover-letter-templates" | "/linkedin-profile" | "/portfolio" | "/references" | "/profile" | "/wipe" | "/onboarding/plan" | "/onboarding/checklist" | "/onboarding/manager-alignment" | "/onboarding/network-map" | "/onboarding/skill-refresh" | "/onboarding/first-90-days" | "/onboarding/first-90-days/:id" | "/follow-up-emails";
   };
   "routes/landing.tsx": {
     id: "routes/landing";
@@ -259,7 +269,7 @@ type RouteFiles = {
   };
   "components/Layout.tsx": {
     id: "components/Layout";
-    page: "/dashboard" | "/jobs" | "/jobs/:id" | "/saved-searches" | "/job-alerts" | "/companies" | "/companies/:id" | "/applications" | "/applications/analytics" | "/applications/:id" | "/interview-prep" | "/interview-schedule" | "/interview-notes" | "/interviewer-feedback" | "/mock-interview" | "/technical-practice" | "/behavioral-bank" | "/interview-cheat-sheet" | "/panel-interview" | "/case-study" | "/interview-analytics" | "/offers" | "/offers/compare" | "/offers/negotiate" | "/offers/equity" | "/offers/benefits" | "/offers/decide" | "/offers/resign" | "/resumes" | "/resumes/new" | "/resumes/upload" | "/resumes/batch" | "/resumes/batch/:id" | "/resumes/:id" | "/resumes/:id/edit" | "/resumes/:id/cover-letter" | "/resumes/:id/skill-gap" | "/resumes/:id/interview-questions" | "/resumes/:id/salary-estimate" | "/resumes/:id/multi-jd" | "/resumes/:id/templates" | "/resumes/:id/tailored" | "/resumes/:id/versions" | "/cover-letter-templates" | "/linkedin-profile" | "/portfolio" | "/references" | "/profile" | "/wipe" | "/onboarding/plan" | "/onboarding/checklist" | "/onboarding/manager-alignment" | "/onboarding/network-map" | "/onboarding/skill-refresh" | "/onboarding/first-90-days" | "/follow-up-emails";
+    page: "/dashboard" | "/jobs" | "/jobs/:id" | "/saved-searches" | "/job-alerts" | "/companies" | "/companies/:id" | "/applications" | "/applications/analytics" | "/applications/:id" | "/interview-prep" | "/interview-schedule" | "/interview-notes" | "/interviewer-feedback" | "/mock-interview" | "/technical-practice" | "/behavioral-bank" | "/interview-cheat-sheet" | "/panel-interview" | "/case-study" | "/interview-analytics" | "/offers" | "/offers/compare" | "/offers/negotiate" | "/offers/negotiate/:id" | "/offers/equity" | "/offers/benefits" | "/offers/decide" | "/offers/resign" | "/resumes" | "/resumes/new" | "/resumes/upload" | "/resumes/batch" | "/resumes/batch/:id" | "/resumes/:id" | "/resumes/:id/edit" | "/resumes/:id/cover-letter" | "/resumes/:id/skill-gap" | "/resumes/:id/interview-questions" | "/resumes/:id/salary-estimate" | "/resumes/:id/multi-jd" | "/resumes/:id/templates" | "/resumes/:id/tailored" | "/resumes/:id/versions" | "/cover-letter-templates" | "/linkedin-profile" | "/portfolio" | "/references" | "/profile" | "/wipe" | "/onboarding/plan" | "/onboarding/checklist" | "/onboarding/manager-alignment" | "/onboarding/network-map" | "/onboarding/skill-refresh" | "/onboarding/first-90-days" | "/onboarding/first-90-days/:id" | "/follow-up-emails";
   };
   "routes/dashboard.tsx": {
     id: "routes/dashboard";
@@ -356,6 +366,10 @@ type RouteFiles = {
   "routes/salary-negotiation.tsx": {
     id: "routes/salary-negotiation";
     page: "/offers/negotiate";
+  };
+  "routes/offers.negotiate.$id.tsx": {
+    id: "routes/offers.negotiate.$id";
+    page: "/offers/negotiate/:id";
   };
   "routes/equity-calculator.tsx": {
     id: "routes/equity-calculator";
@@ -480,6 +494,10 @@ type RouteFiles = {
   "routes/first-90-days.tsx": {
     id: "routes/first-90-days";
     page: "/onboarding/first-90-days";
+  };
+  "routes/onboarding.first-90-days.$id.tsx": {
+    id: "routes/onboarding.first-90-days.$id";
+    page: "/onboarding/first-90-days/:id";
   };
   "routes/follow-up-emails.tsx": {
     id: "routes/follow-up-emails";

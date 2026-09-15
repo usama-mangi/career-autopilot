@@ -1134,31 +1134,24 @@ export interface InterviewCheatSheet {
   updatedAt: string;
 }
 
+/** Mirrors the persisted InterviewSchedule row (prisma/schema.prisma). */
 export interface InterviewScheduleEntry {
   id: string;
   userId: string;
-  applicationId?: string;
+  applicationId?: string | null;
   companyName: string;
   roleTitle: string;
-  company?: string;
-  role?: string;
-  interviewers: InterviewerInfo[];
+  interviewType: string;
   scheduledAt: string;
   duration: number;
   timezone: string;
-  type: "phone" | "video" | "onsite" | "technical" | "behavioral" | "panel";
-  round: number;
-  meetingLink?: string;
-  location?: string;
-  preparationNotes?: string;
-  interviewerNames?: string[];
-  interviewType?: string;
-  prepTimeBlock?: number;
-  prepTimeBlocks?: Array<{ start: string; end: string; topic: string }>;
+  location?: string | null;
+  meetingLink?: string | null;
+  interviewerNames: string[];
+  prepTimeBlock?: number | null;
+  notes?: string | null;
   status: "scheduled" | "completed" | "cancelled" | "rescheduled";
-  reminderSent?: boolean;
-  reminders?: Array<{ type: string; minutesBefore: number; sent: boolean }>;
-  notes?: string;
+  reminders: Array<{ type: string; minutesBefore: number; sent: boolean }>;
   createdAt: string;
   updatedAt: string;
 }
@@ -1193,34 +1186,30 @@ export interface InterviewPrep {
 export interface InterviewNote {
   id: string;
   userId: string;
-  applicationId?: string;
-  scheduleId?: string;
-  companyName?: string;
-  roleTitle?: string;
-  interviewType?: string;
-  round?: number;
-  roundNumber?: number;
-  interviewer?: string;
-  interviewerRole?: string;
-  date?: string;
-  interviewDate?: string;
-  duration?: number;
-  questions: InterviewQA[];
-  selfRating?: number;
+  applicationId?: string | null;
+  scheduleId?: string | null;
+  companyName: string;
+  roleTitle: string;
+  interviewType: string;
+  roundNumber: number;
+  questionsAsked: InterviewQA[];
+  selfRating: number;
   strengths: string[];
   weaknesses: string[];
-  followUpNeeded: string[];
-  followUpItems?: string[];
-  generalNotes?: string;
-  nextSteps?: string;
+  followUpItems: string[];
+  generalNotes?: string | null;
+  interviewDate: string;
   createdAt: string;
   updatedAt: string;
+  feedbacks?: InterviewerFeedback[];
 }
 
+/** Mirrors the questionsAsked JSON entries on InterviewNote. */
 export interface InterviewQA {
   question: string;
-  answer: string;
-  followUp?: string;
+  category?: string;
+  myAnswer?: string;
+  rating?: number;
 }
 
 export interface InterviewerFeedback {
@@ -1242,16 +1231,14 @@ export interface InterviewerFeedback {
 export interface FollowUpEmail {
   id: string;
   userId: string;
-  applicationId?: string;
-  interviewNoteId?: string;
+  applicationId?: string | null;
+  interviewNoteId?: string | null;
   type: string;
-  recipient?: string;
   subject: string;
-  content?: string;
-  body?: string;
-  sentAt?: string;
+  body: string;
+  sentAt?: string | null;
   createdAt: string;
-  updatedAt?: string;
+  updatedAt: string;
 }
 
 export interface PanelInterview {
@@ -1388,6 +1375,44 @@ export interface OfferBenefits {
   other?: string[];
 }
 
+/**
+ * One offer entry inside an OfferComparison row's `offers` JSON. Created by
+ * the offer-comparison form; a comparison aggregates several of these.
+ */
+export interface ComparisonOfferEntry {
+  name: string;
+  baseSalary: number;
+  equity: number;
+  bonus: number;
+  location: string;
+  remotePolicy: string;
+  benefits: string;
+  pto: number;
+  growthOpportunities: number;
+  companyCulture: number;
+}
+
+/** A persisted OfferComparison row as returned by the offer-negotiation API. */
+export interface OfferComparisonRow {
+  id: string;
+  userId: string;
+  applicationId?: string | null;
+  name: string;
+  offers: ComparisonOfferEntry[];
+  weights: Record<string, number>;
+  scores: Array<{ offerName: string; totalScore: number; criterionScores: Array<{ criterion: string; score: number; maxScore: number; notes: string }> }> | null;
+  recommendation?: string | null;
+  application?: {
+    id: string;
+    companyName: string;
+    roleTitle: string;
+    status: string;
+  } | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** @deprecated Did not match any persisted server shape; use OfferComparisonRow. */
 export interface OfferComparisonItem {
   offerId: string;
   companyName: string;
@@ -1421,14 +1446,46 @@ export interface OfferScore {
   overallScore: number;
 }
 
+/**
+ * Mirrors the NegotiationCoach rows persisted by OfferNegotiationService:
+ * AI-parsed strategy content plus the optional link back to the application
+ * the negotiation belongs to.
+ */
 export interface NegotiationCoach {
   id: string;
   userId: string;
-  offerId: string;
-  marketData: MarketData;
-  scripts: NegotiationScript[];
-  counterOffers: CounterOffer[];
-  emails: NegotiationEmail[];
+  applicationId?: string | null;
+  companyName: string;
+  roleTitle: string;
+  offerDetails?: {
+    baseSalary: number;
+    equity?: number;
+    equityType?: string;
+    bonus?: number;
+    signOn?: number;
+    benefits?: string[];
+  };
+  marketData?: MarketData | null;
+  strategy?: {
+    overallApproach: string;
+    anchorPoint: number;
+    targetPoint: number;
+    walkAwayPoint: number;
+    keyLeveragePoints?: string[];
+    stepByStep?: Array<{ step: number; action: string; script?: string; tip?: string }>;
+  } | null;
+  emailTemplates?: Array<{
+    type?: string;
+    subject: string;
+    body: string;
+  }> | null;
+  scripts?: NegotiationScript[];
+  application?: {
+    id: string;
+    companyName: string;
+    roleTitle: string;
+    status: string;
+  } | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -1441,10 +1498,13 @@ export interface MarketData {
   sources: string[];
 }
 
+/** Mirrors the scripts[] entries requested by buildNegotiationCoachPrompt. */
 export interface NegotiationScript {
   scenario: string;
-  script: string;
-  tips: string[];
+  opening: string;
+  keyPoints: string[];
+  closing: string;
+  handlingObjections?: string[];
 }
 
 export interface CounterOffer {
@@ -1837,44 +1897,45 @@ export interface LearningResource {
 export interface First90DaysTracker {
   id: string;
   userId: string;
+  applicationId?: string | null;
   companyName: string;
   roleTitle: string;
   startDate: string;
-  milestones: First90Milestone[];
-  feedbackLoops: FeedbackLoop[];
-  earlyWins: EarlyWin[];
+  milestones: First90Phase[];
+  feedbackLoops: First90FeedbackLoop[];
+  earlyWins: First90EarlyWin[];
+  currentPhase?: string;
+  overallProgress?: number;
   createdAt: string;
   updatedAt: string;
 }
 
-export interface First90Milestone {
-  id: string;
-  title: string;
-  description: string;
-  targetDate: string;
-  completed: boolean;
-  completedAt?: string;
-  evidence?: string;
-  category: "learning" | "relationship" | "delivery" | "process";
+/**
+ * Shapes match what buildFirst90DaysPrompt (server/src/post-onboarding/prompts.ts)
+ * requests from the AI and what createTracker persists: phase-grouped
+ * milestones (learning → contributing → leading), feedback loops, early wins.
+ */
+export interface First90Phase {
+  phase: "learning" | "contributing" | "leading";
+  timeframe?: string;
+  goals?: string[];
+  deliverables?: string[];
+  successCriteria?: string[];
 }
 
-export interface FeedbackLoop {
-  id: string;
-  withWhom: string;
-  frequency: string;
-  lastFeedbackDate?: string;
-  nextFeedbackDate?: string;
-  notes?: string;
-  actionItems: string[];
+export interface First90FeedbackLoop {
+  type: string;
+  frequency?: string;
+  participants?: string[];
+  purpose?: string;
 }
 
-export interface EarlyWin {
-  id: string;
-  title: string;
-  description: string;
-  impact: string;
-  date: string;
-  stakeholders: string[];
+export interface First90EarlyWin {
+  opportunity: string;
+  impact?: "high" | "medium" | "low";
+  effort?: "high" | "medium" | "low";
+  timeframe?: string;
+  steps?: string[];
 }
 
 // ============================================================================
@@ -2225,56 +2286,38 @@ export interface ScheduleUpdateRequest {
 
 export interface InterviewNoteCreateRequest {
   applicationId?: string;
-  interviewId?: string;
   scheduleId?: string;
-  companyName?: string;
-  roleTitle?: string;
-  interviewType?: string;
-  interviewDate?: string;
-  round?: number;
+  companyName: string;
+  roleTitle: string;
+  interviewType: string;
+  interviewDate: string;
   roundNumber?: number;
-  interviewer?: string;
-  interviewerRole?: string;
-  date?: string;
-  duration?: number;
-  questions: InterviewQA[];
-  selfRating?: number;
-  strengths: string[];
-  weaknesses: string[];
-  followUpNeeded: string[];
+  questionsAsked: InterviewQA[];
+  selfRating: number;
+  strengths?: string[];
+  weaknesses?: string[];
   followUpItems?: string[];
   generalNotes?: string;
-  nextSteps?: string;
 }
 
 export interface InterviewNoteUpdateRequest {
-  round?: number;
-  interviewer?: string;
-  interviewerRole?: string;
-  date?: string;
-  duration?: number;
-  questions?: InterviewQA[];
+  questionsAsked?: InterviewQA[];
   selfRating?: number;
   strengths?: string[];
   weaknesses?: string[];
-  followUpNeeded?: string[];
-  nextSteps?: string;
+  followUpItems?: string[];
+  generalNotes?: string;
 }
 
 export interface FeedbackCreateRequest {
-  applicationId?: string;
-  interviewNoteId?: string;
-  round?: number;
-  interviewer?: string;
-  interviewerName?: string;
+  interviewerName: string;
   interviewerRole?: string;
-  rating?: number;
-  feedbackText?: string;
+  rating: number;
+  feedbackText: string;
+  recommendation: "strong_hire" | "hire" | "neutral" | "no_hire" | "strong_no_hire";
   strengths?: string[];
   concerns?: string[];
-  recommendation?: string;
-  hireRecommendation?: "strong_hire" | "hire" | "neutral" | "no_hire" | "strong_no_hire";
-  notes?: string;
+  sharedAt?: string;
 }
 
 export interface FeedbackUpdateRequest {
@@ -2292,27 +2335,22 @@ export interface FollowUpEmailCreateRequest {
   applicationId?: string;
   interviewNoteId?: string;
   type: string;
-  recipient?: string;
-  subject?: string;
-  content?: string;
-  body?: string;
-  scheduledAt?: string;
+  subject: string;
+  body: string;
 }
 
 export interface FollowUpEmailUpdateRequest {
-  type?: "thank_you" | "check_in" | "rejection_response" | "offer_negotiation" | "custom";
-  recipient?: string;
   subject?: string;
-  content?: string;
-  status?: "draft" | "sent" | "scheduled";
-  scheduledAt?: string;
+  body?: string;
   sentAt?: string;
 }
 
 export interface FollowUpEmailGenerateRequest {
-  applicationId?: string;
-  type: string;
-  context?: string;
+  type: "thank_you" | "check_in" | "additional_materials" | "custom";
+  roleTitle: string;
+  companyName: string;
+  interviewerName?: string;
+  additionalContext?: string;
 }
 
 export interface PanelInterviewCreateRequest {
@@ -2398,7 +2436,7 @@ export interface OfferComparisonUpdateRequest {
 }
 
 export interface NegotiationCoachCreateRequest {
-  offerId?: string;
+  applicationId?: string;
   companyName?: string;
   roleTitle?: string;
   jobDescription?: string;
@@ -2513,18 +2551,19 @@ export interface SkillRefreshCreateRequest {
 }
 
 export interface TrackerCreateRequest {
+  applicationId?: string;
   companyName: string;
   roleTitle: string;
   startDate?: string;
-  milestones?: Omit<First90Milestone, "id">[];
-  feedbackLoops?: Omit<FeedbackLoop, "id">[];
-  earlyWins?: Omit<EarlyWin, "id">[];
+  milestones?: First90Phase[];
+  feedbackLoops?: First90FeedbackLoop[];
+  earlyWins?: First90EarlyWin[];
 }
 
 export interface TrackerUpdateRequest {
-  milestones?: Omit<First90Milestone, "id">[];
-  feedbackLoops?: Omit<FeedbackLoop, "id">[];
-  earlyWins?: Omit<EarlyWin, "id">[];
+  milestones?: First90Phase[];
+  feedbackLoops?: First90FeedbackLoop[];
+  earlyWins?: First90EarlyWin[];
 }
 
 export interface ProfileUpdateRequest {

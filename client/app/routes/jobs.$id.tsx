@@ -32,6 +32,7 @@ export default function JobDetailPage() {
   const [resumeId, setResumeId] = useState<string | null>(null);
   const [hasTailoredResume, setHasTailoredResume] = useState(false);
   const [resumes, setResumes] = useState<any[]>([]);
+  const [existingApplication, setExistingApplication] = useState<{ id: string; status: string } | null>(null);
 
   // Cover letter modal
   const [showCoverLetter, setShowCoverLetter] = useState(false);
@@ -54,6 +55,24 @@ export default function JobDetailPage() {
       loadResumes();
     }
   }, [isAuthenticated, id]);
+
+  // Lifecycle: if this job is already being tracked, surface that instead of
+  // letting the user apply twice.
+  useEffect(() => {
+    if (!isAuthenticated || !id) return;
+    let cancelled = false;
+    api.applications
+      .list({ limit: 100 })
+      .then((data) => {
+        if (cancelled) return;
+        const match = (data.applications || []).find((a) => a.jobId === id);
+        setExistingApplication(match ? { id: match.id, status: match.status } : null);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, id, job?.appliedAt]);
 
   async function loadJobDetails() {
     if (!id) return;
@@ -114,6 +133,7 @@ export default function JobDetailPage() {
       setJob((prev: any) => ({ ...prev, appliedAt: new Date().toISOString() }));
       useJobsStore.getState().markAsApplied(id);
       setShowApplyModal(false);
+      setExistingApplication({ id: newApp.id, status: newApp.status || "applied" });
       toastSuccess("Application created", "Redirecting to application details...");
       navigate(`/applications/${newApp.id}`);
     } catch (err) {
@@ -397,9 +417,18 @@ export default function JobDetailPage() {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Primary CTA */}
+          {/* Primary CTA — lifecycle-aware: continue tracking, or start now */}
           <div className="bg-[#FFF8F0] rounded-xl border border-[#E8DDD1] p-6 space-y-3 shadow-sm">
-            {hasResume && resumeId ? (
+            {existingApplication ? (
+              <>
+                <Link to={`/applications/${existingApplication.id}`} className="block">
+                  <Button className="w-full" size="lg">Continue This Application →</Button>
+                </Link>
+                <p className="text-xs text-gray-500 text-center">
+                  You're already tracking this job — it's in your pipeline.
+                </p>
+              </>
+            ) : hasResume && resumeId ? (
               hasTailoredResume ? (
                 <Link
                   to={`/resumes/${resumeId}`}
@@ -436,8 +465,8 @@ export default function JobDetailPage() {
                   Mark Applied
                 </Button>
               )}
-              {job.appliedAt && (
-                <Link to="/applications" className="block">
+              {existingApplication && (
+                <Link to={`/applications/${existingApplication.id}`} className="block">
                   <Button variant="secondary" size="sm" className="w-full">View Application</Button>
                 </Link>
               )}

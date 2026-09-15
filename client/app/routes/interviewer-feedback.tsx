@@ -87,7 +87,7 @@ export default function InterviewerFeedback() {
     setError("");
     try {
       const fb = await api.interviewProcess.addFeedback(selectedNoteId, {
-        interviewer: formData.interviewerName,
+        interviewerName: formData.interviewerName,
         interviewerRole: formData.interviewerRole || undefined,
         rating: formData.rating,
         feedbackText: formData.feedbackText,

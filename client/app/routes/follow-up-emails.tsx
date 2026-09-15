@@ -4,6 +4,7 @@ import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { cn } from "~/lib/utils";
 import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, Select, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
+import { suggestFollowUp } from "~/lib/follow-up";
 
 export const meta = () => [
   { title: "Career Autopilot | Follow-up Email Templates" },
@@ -33,15 +34,18 @@ export default function FollowUpEmails() {
   const [success, setSuccess] = useState("");
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [genTiming, setGenTiming] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState<{
     interviewNoteId: string;
+    applicationId: string;
     type: "thank_you" | "check_in" | "additional_materials" | "custom";
     subject: string;
     body: string;
   }>({
     interviewNoteId: "",
+    applicationId: "",
     type: "thank_you",
     subject: "",
     body: "",
@@ -94,13 +98,14 @@ export default function FollowUpEmails() {
     try {
       const email = await api.interviewProcess.createFollowUpEmail({
         interviewNoteId: formData.interviewNoteId || undefined,
+        applicationId: formData.applicationId || undefined,
         type: formData.type,
         subject: formData.subject,
         body: formData.body,
       });
       setEmails(prev => [email, ...prev]);
       setShowForm(false);
-      setFormData({ interviewNoteId: "", type: "thank_you", subject: "", body: "" });
+      setFormData({ interviewNoteId: "", applicationId: "", type: "thank_you", subject: "", body: "" });
       toastSuccess("Email saved");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create email");
@@ -113,16 +118,25 @@ export default function FollowUpEmails() {
     setGenerating(true);
     setError("");
     try {
+      // The generate endpoint takes the role/company/interviewer context, not
+      // ids; the created email is linked to the note (and its application)
+      // when the user saves the draft.
       const result = await api.interviewProcess.generateFollowUpEmail({
-        applicationId: genData.interviewNoteId || undefined,
-        type: genData.type as any,
-        context: [genData.companyName, genData.roleTitle, genData.interviewerName, genData.additionalContext].filter(Boolean).join(" "),
+        type: genData.type,
+        roleTitle: genData.roleTitle,
+        companyName: genData.companyName,
+        interviewerName: genData.interviewerName || undefined,
+        additionalContext: genData.additionalContext || undefined,
       });
+      const linkedNote = genData.interviewNoteId
+        ? notes.find(n => n.id === genData.interviewNoteId)
+        : null;
       setFormData({
         interviewNoteId: genData.interviewNoteId,
-        type: genData.type as any,
+        applicationId: linkedNote?.applicationId || "",
+        type: genData.type,
         subject: result.subject,
-        body: result.body || result.content || "",
+        body: result.body,
       });
       setShowGenerate(false);
       setShowForm(true);
@@ -164,7 +178,7 @@ export default function FollowUpEmails() {
         subtitle="Thank-you notes, check-ins, and additional materials"
         action={
           <div className="flex gap-3">
-            <Button variant="secondary" onClick={() => setShowGenerate(true)}>
+            <Button variant="secondary" onClick={() => { setGenTiming(""); setShowGenerate(true); }}>
               <span className="flex items-center gap-1">AI Generate</span>
             </Button>
             <Button onClick={() => setShowForm(true)}>+ New Email</Button>
@@ -227,7 +241,7 @@ export default function FollowUpEmails() {
       {/* Create Modal */}
       <Modal
         isOpen={showForm}
-        onClose={() => { setShowForm(false); setFormData({ interviewNoteId: "", type: "thank_you", subject: "", body: "" }); }}
+        onClose={() => { setShowForm(false); setFormData({ interviewNoteId: "", applicationId: "", type: "thank_you", subject: "", body: "" }); }}
         title="New Follow-up Email"
         size="xl"
       >
@@ -237,7 +251,14 @@ export default function FollowUpEmails() {
             <Select
               label="Linked Interview Note"
               value={formData.interviewNoteId}
-              onChange={(e) => setFormData({ ...formData, interviewNoteId: e.target.value })}
+              onChange={(e) => {
+                const note = notes.find(n => n.id === e.target.value);
+                setFormData(prev => ({
+                  ...prev,
+                  interviewNoteId: e.target.value,
+                  applicationId: note?.applicationId || "",
+                }));
+              }}
               options={[
                 { value: "", label: "None" },
                 ...notes.map(n => ({ value: n.id, label: `${n.companyName} — ${n.roleTitle} (R${n.roundNumber})` })),
@@ -267,7 +288,7 @@ export default function FollowUpEmails() {
           />
           <ModalFooter
             actions={[
-              { label: "Cancel", variant: "secondary", onClick: () => { setShowForm(false); setFormData({ interviewNoteId: "", type: "thank_you", subject: "", body: "" }); } },
+              { label: "Cancel", variant: "secondary", onClick: () => { setShowForm(false); setFormData({ interviewNoteId: "", applicationId: "", type: "thank_you", subject: "", body: "" }); } },
               { label: saving ? "Saving..." : "Save Email", variant: "primary", onClick: handleCreate, loading: saving },
             ]}
           />
@@ -282,22 +303,47 @@ export default function FollowUpEmails() {
         size="lg"
       >
         <form onSubmit={handleGenerate} className="space-y-4">
-          {error && <ErrorBanner error={error} />}
+          {error && <ErrorBanner error={error} />}            <Select
+              label="Linked Interview Note"
+              value={genData.interviewNoteId}
+              onChange={(e) => {
+                const note = notes.find(n => n.id === e.target.value);
+                setGenData(prev => ({
+                  ...prev,
+                  interviewNoteId: e.target.value,
+                  companyName: note?.companyName || prev.companyName,
+                  roleTitle: note?.roleTitle || prev.roleTitle,
+                }));
+                // Suggest type + timing from the selected note instead of
+                // leaving every draft on thank_you.
+                if (note) {
+                  // No specific chip context here — suggest from the note's
+                  // first follow-up item; already-sent email types still
+                  // steer the suggestion inside suggestFollowUp.
+                  const item = note.followUpItems[0] || "follow up";
+                  const suggestion = suggestFollowUp(note, item, emails);
+                  setGenData(prev => ({ ...prev, type: suggestion.type }));
+                  setGenTiming(suggestion.timing);
+                } else {
+                  setGenTiming("");
+                }
+              }}
+              options={[
+                { value: "", label: "None" },
+                ...notes.map(n => ({ value: n.id, label: `${n.companyName} — ${n.roleTitle} (R${n.roundNumber})` })),
+              ]}
+            />
           <Select
-            label="Linked Interview Note"
-            value={genData.interviewNoteId}
-            onChange={(e) => setGenData({ ...genData, interviewNoteId: e.target.value })}
-            options={[
-              { value: "", label: "None" },
-              ...notes.map(n => ({ value: n.id, label: `${n.companyName} — ${n.roleTitle} (R${n.roundNumber})` })),
-            ]}
-          />
-          <Select
-            label="Email Type"
+            label="Email Type (suggested)"
             value={genData.type}
             onChange={(e) => setGenData({ ...genData, type: e.target.value as "thank_you" | "check_in" | "additional_materials" | "custom" })}
             options={emailTypes.map(t => ({ value: t.value, label: t.label }))}
           />
+          {genTiming && (
+            <p className="text-xs text-primary-700 bg-primary-50 border border-primary-100 rounded-lg px-3 py-2">
+              ⏱ {genTiming}
+            </p>
+          )}
           <Input
             label="Company Name"
             placeholder="e.g. Google"

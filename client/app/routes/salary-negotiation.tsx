@@ -1,9 +1,10 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate, useSearchParams } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { cn } from "~/lib/utils";
 import { PageShell, PageHeader, Button, Input, Textarea, Select, Card, Modal, ModalFooter, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
+import NegotiationStrategyView from "~/components/NegotiationStrategyView";
 
 export const meta = () => [
   { title: "Career Autopilot | Salary Negotiation Coach" },
@@ -15,14 +16,17 @@ export default function SalaryNegotiation() {
   const isAuthenticated = !!session;
   const navigate = useNavigate();
   const { success: toastSuccess, error: toastError } = useToastHelpers();
+  const [searchParams] = useSearchParams();
 
   const [coaches, setCoaches] = useState<any[]>([]);
+  const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState({
+    applicationId: "",
     companyName: "",
     roleTitle: "",
     jobDescription: "",
@@ -41,8 +45,44 @@ export default function SalaryNegotiation() {
   }, [isPending, isAuthenticated]);
 
   useEffect(() => {
-    if (isAuthenticated) loadCoaches();
+    if (isAuthenticated) {
+      loadCoaches();
+      loadApplications();
+    }
   }, [isAuthenticated]);
+
+  async function loadApplications() {
+    try {
+      const data = await api.applications.list({ limit: 100 });
+      setApplications(data.applications || []);
+    } catch {
+      // The selector stays empty; linking a session to an application is optional.
+    }
+  }
+
+  // Arriving from an application ("Negotiation coach") or an offer card
+  // ("Negotiate") pre-fills the form — identity from the application params,
+  // the money from the offer being negotiated — and links the session back.
+  useEffect(() => {
+    const applicationId = searchParams.get("applicationId");
+    const company = searchParams.get("company");
+    const baseSalary = searchParams.get("baseSalary");
+    if (!applicationId && !company && !baseSalary) return;
+    setFormData((prev) => ({
+      ...prev,
+      applicationId: applicationId || prev.applicationId,
+      companyName: company || prev.companyName,
+      roleTitle: searchParams.get("role") || prev.roleTitle,
+      baseSalary: baseSalary || prev.baseSalary,
+      equity: searchParams.get("equity") || prev.equity,
+      bonus: searchParams.get("bonus") || prev.bonus,
+      jobDescription: searchParams.get("location")
+        ? `Location: ${searchParams.get("location")}`
+        : prev.jobDescription,
+    }));
+    setShowForm(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function loadCoaches() {
     setLoading(true);
@@ -77,9 +117,22 @@ export default function SalaryNegotiation() {
 
     try {
       const result = await api.offerNegotiation.createCoach({
+        applicationId: formData.applicationId || undefined,
         companyName: formData.companyName,
         roleTitle: formData.roleTitle,
-      } as any);
+        jobDescription: formData.jobDescription || undefined,
+        resumeText: formData.resumeText || undefined,
+        offerDetails: {
+          baseSalary: Number(formData.baseSalary) || 0,
+          equity: formData.equity ? Number(formData.equity) : undefined,
+          equityType: formData.equity || undefined,
+          bonus: formData.bonus ? Number(formData.bonus) : undefined,
+          signOn: formData.signOn ? Number(formData.signOn) : undefined,
+          benefits: formData.benefits
+            ? formData.benefits.split(",").map((b) => b.trim()).filter(Boolean)
+            : undefined,
+        },
+      });
       setCoaches(prev => [result, ...prev]);
       setShowForm(false);
       resetForm();
@@ -108,7 +161,7 @@ export default function SalaryNegotiation() {
   }
 
   function resetForm() {
-    setFormData({ companyName: "", roleTitle: "", jobDescription: "", resumeText: "", baseSalary: "", equity: "", equityType: "RSUs", bonus: "", signOn: "", benefits: "" });
+    setFormData({ applicationId: "", companyName: "", roleTitle: "", jobDescription: "", resumeText: "", baseSalary: "", equity: "", equityType: "RSUs", bonus: "", signOn: "", benefits: "" });
   }
 
   function formatMoney(n: number) {
@@ -151,108 +204,21 @@ export default function SalaryNegotiation() {
           {coaches.map(coach => (
             <Card key={coach.id} hover onClick={() => setExpandedId(expandedId === coach.id ? null : coach.id)}>
               <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-gray-900">{coach.companyName} — {coach.roleTitle}</h3>
-                  <p className="text-sm text-gray-500">{new Date(coach.createdAt).toLocaleDateString()}</p>
-                </div>
+              <div>
+                <h3 className="font-semibold text-gray-900">{coach.companyName} — {coach.roleTitle}</h3>
+                <p className="text-sm text-gray-500">
+                  {new Date(coach.createdAt).toLocaleDateString()}
+                  {coach.application && (
+                    <> · from <Link to={`/applications/${coach.application.id}`} className="text-primary-600 hover:underline">{coach.application.companyName} — {coach.application.roleTitle}</Link></>
+                  )}
+                </p>
+              </div>
                 <Button variant="ghost" size="sm" className="text-red-400 hover:text-red-600" onClick={(e) => { e.stopPropagation(); handleDelete(coach.id); }}>Delete</Button>
               </div>
 
               {expandedId === coach.id && (
-                <div className="border-t border-gray-100 pt-6 mt-4 space-y-6">
-                  {/* Strategy */}
-                  {coach.strategy && (
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-3">Negotiation Strategy</h4>
-                      <Card>
-                        <p className="text-sm text-gray-700 mb-3">{coach.strategy.overallApproach}</p>
-                        <div className="grid grid-cols-3 gap-4 mb-4">
-                          <div className="text-center p-3 bg-blue-50 rounded-lg">
-                            <div className="text-xs text-blue-600">Anchor</div>
-                            <div className="font-bold text-blue-900">{formatMoney(coach.strategy.anchorPoint)}</div>
-                          </div>
-                          <div className="text-center p-3 bg-green-50 rounded-lg">
-                            <div className="text-xs text-green-600">Target</div>
-                            <div className="font-bold text-green-900">{formatMoney(coach.strategy.targetPoint)}</div>
-                          </div>
-                          <div className="text-center p-3 bg-red-50 rounded-lg">
-                            <div className="text-xs text-red-600">Walk Away</div>
-                            <div className="font-bold text-red-900">{formatMoney(coach.strategy.walkAwayPoint)}</div>
-                          </div>
-                        </div>
-                        {coach.strategy.keyLeveragePoints?.length > 0 && (
-                          <div className="mb-3">
-                            <h5 className="text-sm font-medium text-gray-700 mb-1">Key Leverage Points</h5>
-                            <ul className="space-y-1">
-                              {coach.strategy.keyLeveragePoints.map((lp: string, i: number) => (
-                                <li key={i} className="text-sm text-gray-600 flex items-start gap-2">
-                                  <span className="text-indigo-500 mt-0.5">•</span> {lp}
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                        {coach.strategy.stepByStep?.length > 0 && (
-                          <div>
-                            <h5 className="text-sm font-medium text-gray-700 mb-2">Step-by-Step Plan</h5>
-                            <div className="space-y-2">
-                              {coach.strategy.stepByStep.map((step: any) => (
-                                <div key={step.step} className="flex gap-3 items-start">
-                                  <span className="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-0.5 rounded-full mt-0.5">{step.step}</span>
-                                  <div className="flex-1">
-                                    <p className="text-sm font-medium text-gray-800">{step.action}</p>
-                                    {step.script && <p className="text-xs text-gray-500 mt-1 italic">"{step.script}"</p>}
-                                    {step.tip && <p className="text-xs text-blue-600 mt-1">Tip: {step.tip}</p>}
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </Card>
-                    </div>
-                  )}
-
-                  {/* Email Templates */}
-                  {coach.emailTemplates?.length > 0 && (
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-3">Email Templates</h4>
-                      <div className="space-y-3">
-                        {coach.emailTemplates.map((tpl: any, i: number) => (
-                          <Card key={i} padding="md">
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="bg-indigo-100 text-indigo-700 text-xs font-medium px-2 py-0.5 rounded-full capitalize">{tpl.type?.replace(/_/g, " ")}</span>
-                              <span className="text-sm font-medium text-gray-700">{tpl.subject}</span>
-                            </div>
-                            <pre className="text-sm text-gray-600 whitespace-pre-wrap font-sans">{tpl.body}</pre>
-                          </Card>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Scripts */}
-                  {coach.scripts?.length > 0 && (
-                    <div>
-                      <h4 className="font-semibold text-gray-900 mb-3">Conversation Scripts</h4>
-                      <div className="space-y-3">
-                        {coach.scripts.map((script: any, i: number) => (
-                          <Card key={i} padding="md">
-                            <h5 className="font-medium text-gray-800 mb-2">{script.scenario}</h5>
-                            <p className="text-sm text-gray-600 mb-2"><strong>Opening:</strong> "{script.opening}"</p>
-                            {script.keyPoints?.length > 0 && (
-                              <ul className="space-y-1 mb-2">
-                                {script.keyPoints.map((kp: string, ki: number) => (
-                                  <li key={ki} className="text-sm text-gray-600">• {kp}</li>
-                                ))}
-                              </ul>
-                            )}
-                            <p className="text-sm text-gray-600 italic">Closing: "{script.closing}"</p>
-                          </Card>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                <div className="border-t border-gray-100 pt-6 mt-4">
+                  <NegotiationStrategyView coach={coach} />
                 </div>
               )}
             </Card>
@@ -268,6 +234,23 @@ export default function SalaryNegotiation() {
         size="xl"
       >
         <form onSubmit={handleCreate} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Linked application</label>
+            <select
+              value={formData.applicationId}
+              onChange={(e) => handleInputChange("applicationId", e.target.value)}
+              className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+            >
+              <option value="">Not linked (standalone session)</option>
+              {applications.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.companyName} — {a.roleTitle}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">Linking keeps your negotiation strategy with the job it belongs to.</p>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <Input
               label="Company Name"

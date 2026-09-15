@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { useSession } from "~/lib/auth-store";
 import { api } from "~/lib/api";
 import { PageShell, PageHeader, Button, Input, Textarea, Card, Modal, ModalFooter, Select, useToastHelpers, ErrorBanner, reportError } from "~/components/ui";
@@ -32,6 +32,7 @@ export default function InterviewSchedule() {
   const isAuthenticated = !!session;
   const navigate = useNavigate();
   const { success: toastSuccess, error: toastError } = useToastHelpers();
+  const [searchParams] = useSearchParams();
 
   const [schedules, setSchedules] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,6 +42,7 @@ export default function InterviewSchedule() {
   const [success, setSuccess] = useState("");
 
   const [formData, setFormData] = useState({
+    applicationId: "" as string,
     companyName: "",
     roleTitle: "",
     interviewType: "video",
@@ -62,12 +64,32 @@ export default function InterviewSchedule() {
     if (isAuthenticated) loadSchedules();
   }, [isAuthenticated, isPending]);
 
+  // Arriving from an application's toolkit ("Schedule an interview") opens the
+  // form pre-filled and linked to that application. A ?schedule=<id> deep link
+  // opens that interview's edit modal once the list has loaded.
+  useEffect(() => {
+    const applicationId = searchParams.get("applicationId");
+    if (applicationId) {
+      setFormData((prev) => ({
+        ...prev,
+        applicationId,
+        companyName: searchParams.get("company") || "",
+        roleTitle: searchParams.get("role") || "",
+      }));
+      setShowForm(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function loadSchedules() {
     try {
       const data = await api.interviewPrep.listSchedule();
       setSchedules(data);
+      const scheduleId = searchParams.get("schedule");
+      const target = scheduleId ? data.find((s: { id: string }) => s.id === scheduleId) : null;
+      if (target) handleEdit(target);
     } catch (err) {
-      console.error("Failed to load schedules:", err);
+      reportError(err, { title: "Failed to load interviews", toastError });
     } finally {
       setLoading(false);
     }
@@ -75,6 +97,7 @@ export default function InterviewSchedule() {
 
   function resetForm() {
     setFormData({
+      applicationId: "",
       companyName: "",
       roleTitle: "",
       interviewType: "video",
@@ -202,7 +225,7 @@ export default function InterviewSchedule() {
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {upcoming.map(schedule => {
-              const typeConfig = TYPE_CONFIG[schedule.type as keyof typeof TYPE_CONFIG] || TYPE_CONFIG.video;
+              const typeConfig = TYPE_CONFIG[schedule.interviewType as keyof typeof TYPE_CONFIG] || TYPE_CONFIG.video;
               const statusConfig = STATUS_CONFIG[schedule.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.scheduled;
               return (
                 <Card key={schedule.id} className="relative">
@@ -223,6 +246,16 @@ export default function InterviewSchedule() {
                     <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                     {new Date(schedule.scheduledAt).toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
                   </p>
+                  {schedule.applicationId && (
+                    <p className="text-xs mb-2">
+                      <Link
+                        to={`/applications/${schedule.applicationId}`}
+                        className="text-primary-600 hover:underline"
+                      >
+                        ↩ Linked to application
+                      </Link>
+                    </p>
+                  )}
                   <p className="text-sm text-gray-600 mb-2">
                     <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                     {schedule.location || (schedule.meetingLink ? "Virtual" : "TBD")}
@@ -250,7 +283,6 @@ export default function InterviewSchedule() {
                   )}
 
                   <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
-                    <Link to={`/interviews/schedule/${schedule.id}`} className="flex-1 text-center text-sm font-medium text-primary-600 hover:underline">View Details</Link>
                     <Button variant="ghost" size="sm" onClick={() => handleEdit(schedule)} className="flex-1">Edit</Button>
                     <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 flex-1" onClick={() => handleDelete(schedule.id)}>Delete</Button>
                   </div>
@@ -267,7 +299,7 @@ export default function InterviewSchedule() {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Past Interviews</h2>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {past.map(schedule => {
-                const typeConfig = TYPE_CONFIG[schedule.type as keyof typeof TYPE_CONFIG] || TYPE_CONFIG.video;
+                const typeConfig = TYPE_CONFIG[schedule.interviewType as keyof typeof TYPE_CONFIG] || TYPE_CONFIG.video;
                 const statusConfig = STATUS_CONFIG[schedule.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.scheduled;
                 return (
                   <Card key={schedule.id} className="opacity-70">
@@ -286,9 +318,22 @@ export default function InterviewSchedule() {
                     <p className="text-xs text-gray-500 mb-2">
                       {new Date(schedule.scheduledAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                     </p>
+                    {schedule.applicationId && (
+                      <p className="text-xs mb-2">
+                        <Link to={`/applications/${schedule.applicationId}`} className="text-primary-600 hover:underline">↩ Linked to application</Link>
+                      </p>
+                    )}
                     <div className="flex items-center gap-2 pt-2 border-t border-gray-100">
-                      <Link to={`/interviews/schedule/${schedule.id}`} className="flex-1 text-center text-sm font-medium text-primary-600 hover:underline">View Details</Link>
-                      <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700" onClick={() => handleDelete(schedule.id)}>Delete</Button>
+                      {schedule.status === "completed" && (
+                        <Link
+                          to={`/interview-notes?schedule=${schedule.id}`}
+                          className="flex-1 text-center text-sm font-medium text-primary-600 hover:underline"
+                        >
+                          Log Notes
+                        </Link>
+                      )}
+                      <Button variant="ghost" size="sm" className="flex-1" onClick={() => handleEdit(schedule)}>Edit</Button>
+                      <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700 flex-1" onClick={() => handleDelete(schedule.id)}>Delete</Button>
                     </div>
                   </Card>
                 );

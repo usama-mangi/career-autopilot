@@ -6,6 +6,8 @@ import request from 'supertest';
 import { vi } from 'vitest';
 import { ExtensionController } from '../extension/extension.controller';
 import { ExtensionService } from '../extension/extension.service';
+import { InterviewProcessController } from '../interview-process/interview-process.controller';
+import { InterviewProcessService } from '../interview-process/interview-process.service';
 import { JobsController } from '../jobs/jobs.controller';
 import { JobsService } from '../jobs/jobs.service';
 import { AiService } from '../ai/ai.service';
@@ -81,9 +83,10 @@ export async function buildContractHarness(
   };
 
   const moduleRef = await Test.createTestingModule({
-    controllers: [ExtensionController, JobsController],
+    controllers: [ExtensionController, InterviewProcessController, JobsController],
     providers: [
       ExtensionService,
+      InterviewProcessService,
       JobsService,
       { provide: PrismaService, useValue: prisma },
       { provide: RedisService, useValue: redis },
